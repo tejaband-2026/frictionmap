@@ -45,12 +45,19 @@ None of these show up in a design, because no screen exists for them.
 
 Full report: [example-saucedemo-report.html](example-saucedemo-report.html) (download it and open it in a browser; GitHub shows it as code). The map itself: [example-saucedemo-flow.json](example-saucedemo-flow.json).
 
-## Try it
+## Try it on your own project
 
-You'll need an AI coding agent such as Claude Code.
+Use it on the app you work on, or a side project. Anything you have the code for.
 
-1. Download this repo and put the folder in your agent's skills folder. For Claude Code, that's `~/.claude/skills/frictionmap`.
-2. Open your project and ask: *"Map our sign-up flow and find where people get stuck."*
+1. Download this repo and put the folder in your AI agent's skills folder. For Claude Code, that's `~/.claude/skills/frictionmap`.
+2. Open your project and ask for the journey you want mapped:
+   - *"Map our sign-up flow and find where people get stuck."*
+   - *"Map how a user resets their password."*
+   - *"Map inviting a teammate, from the email to their first login."*
+
+   One journey at a time works best. Saying where it ends ("until they reach the dashboard") makes the results sharper.
+
+You don't need the app running, just the code. If your code is on GitHub, you can point to it instead: *"Clone github.com/your-org/your-repo and map the onboarding flow."*
 
 The agent follows [SKILL.md](SKILL.md). A small Python script, [analyze.py](analyze.py), checks every code reference and builds the report. It needs nothing installed beyond Python.
 
