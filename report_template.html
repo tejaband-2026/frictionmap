@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>$title</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE  work: an engineering review a PM can hand to a team
+   IDEA   a planning office's ruled flow sheet: the real state machine, redlined
+   PICTURE the full state diagram, friction states in brick, ghost states dashed
+   COLOUR stone ground, black ink, brick for friction, white panels; night #171513
+   TYPE   Schibsted Grotesk throughout, weight for hierarchy
+   LAYOUT finding as title with figures in one ruled row, diagram full width beneath, then the ruled issue table */
+:root{color-scheme:light dark;--bg:light-dark(#e7e4df,#171513);--panel:light-dark(#ffffff,#211e1b);--ink:light-dark(#111111,#ece8e2);--muted:light-dark(#5a5650,#a8a198);--rule:light-dark(#c9c4bc,#3a3530);--brick:light-dark(#c8371e,#e8603f);--brick-tint:light-dark(#f6ddd6,#4a221a);--amber:light-dark(#9a5b00,#e0a245);--amber-tint:light-dark(#f5e7cf,#3d2c12)}
+:root[data-theme=light]{color-scheme:light}
+:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Schibsted Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;overflow-x:clip}
+a{color:inherit;text-decoration-color:var(--brick);text-underline-offset:3px}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88em}
+.band{padding-block:clamp(28px,4vw,56px);padding-left:max(5vw,16px,env(safe-area-inset-left,0px));padding-right:max(5vw,16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1240px;margin:0 auto}
+.top{padding-bottom:20px}
+.repo{color:var(--muted);font-size:14px;margin:0 0 14px}
+h1{font-size:clamp(32px,4.4vw,50px);line-height:1.05;letter-spacing:-.02em;font-weight:700;margin:0 0 16px;max-width:22ch;text-wrap:balance}
+.lede{font-size:17px;max-width:68ch;margin:0;color:var(--ink)}
+.figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(10em,1fr));border-top:2px solid var(--ink);border-bottom:1px solid var(--rule);margin-top:26px}
+.fig-n{padding:14px 16px 14px 0}
+.fig-n+.fig-n{padding-left:16px;border-left:1px solid var(--rule)}
+.fig-n b{display:block;font-size:clamp(28px,3.4vw,40px);line-height:1.1;font-weight:700;font-variant-numeric:tabular-nums}
+.fig-n b.hot{color:var(--brick)}
+.fig-n span{font-size:14px;color:var(--muted)}
+.sheet{background:var(--panel);border:1px solid var(--rule);border-radius:6px}
+.diagram-head{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:baseline;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--rule)}
+.diagram-head h2{margin:0;font-size:20px;font-weight:700}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:14px;color:var(--muted);margin:0;padding:0;list-style:none}
+.legend i{display:inline-block;width:22px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:6px;border:1.5px solid var(--ink);background:var(--panel)}
+.legend i.h{background:var(--brick);border-color:var(--brick)}
+.legend i.m{background:var(--brick-tint);border-color:var(--brick)}
+.legend i.g{border-style:dashed;border-color:var(--brick)}
+.legend i.s{border-radius:7px}
+.legend i.u{height:0;border:0;border-top:2px solid var(--ink);border-radius:0;width:24px;vertical-align:4px}
+.legend i.d{height:0;border:0;border-top:2px dashed var(--ink);border-radius:0;width:24px;vertical-align:4px}
+.scroll{overflow-x:auto}
+#diagram{padding:18px 12px 24px;min-height:420px;width:max-content;min-width:100%}
+#diagram svg{height:auto;display:block;margin:0 auto}
+.hidden-note{margin:0;padding:12px 20px 16px;border-top:1px solid var(--rule);font-size:14px;color:var(--muted)}
+#diagram .fallback{white-space:pre;font-size:13px;color:var(--muted)}
+h2.sec{font-size:clamp(24px,2.6vw,32px);line-height:1.1;letter-spacing:-.01em;margin:0 0 6px;font-weight:700}
+.sec-sub{color:var(--muted);margin:0 0 18px;max-width:70ch}
+table{width:100%;border-collapse:collapse;background:var(--panel)}
+thead th{text-align:left;font-size:14px;font-weight:500;color:var(--muted);padding:10px 14px;border-bottom:2px solid var(--ink)}
+td{vertical-align:top;padding:16px 14px;border-bottom:1px solid var(--rule)}
+td.fid{font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+tr:target td{background:var(--brick-tint)}
+.what strong{font-size:17px;display:block;line-height:1.3;margin-bottom:6px}
+.what p{margin:0 0 6px;max-width:68ch}
+.what .when{color:var(--muted)}
+.what .fix{border-left:3px solid var(--ink);padding-left:10px;margin-top:10px;border-radius:0}
+.what .src{font-size:13px;color:var(--muted);margin-top:8px}
+.pill{display:inline-block;font-size:13px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.pill.high{background:var(--brick);color:#fff}
+.pill.medium{background:var(--brick-tint);color:var(--brick)}
+.pill.low{background:var(--amber-tint);color:var(--amber)}
+.pill.info{border:1px solid var(--rule);color:var(--muted)}
+.ev{list-style:none;margin:0;padding:0;font-size:14px}
+.ev li{margin-bottom:8px}
+.ev .path{display:block;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;overflow-wrap:anywhere}
+.ev .note{color:var(--muted)}
+col.c-id{width:52px}col.c-sev{width:96px}col.c-ev{width:34%}
+.paths{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:24px;align-items:start}
+.path-card{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:18px 20px}
+.path-card h3{margin:0 0 10px;font-size:18px}
+.path-card ol{margin:0;padding-left:22px}
+.path-card li{margin-bottom:6px}
+.who{display:inline-block;font-size:12px;font-weight:700;padding:1px 7px;border-radius:4px;margin-right:4px;border:1px solid var(--rule)}
+.who.user{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.arrow{color:var(--muted)}
+.method p{margin:0 0 10px;max-width:62ch}
+.gt td{padding:12px 14px}
+.gt .pill.info{color:var(--ink)}
+.pd{margin-top:18px}
+.pd summary{cursor:pointer;font-weight:500;padding:12px 0;min-height:44px}
+.foot{font-size:14px;color:var(--muted);border-top:1px solid var(--rule)}
+@media(max-width:860px){.paths{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){
+  .fig-n+.fig-n{border-left:0;padding-left:0}
+  .figs{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .fig-n{padding-right:8px;border-bottom:1px solid var(--rule)}
+  table{font-size:15px}
+  .stack thead{display:none}
+  .stack colgroup{display:none}
+  .stack tr{display:grid;padding-block:12px;border-bottom:1px solid var(--rule)}
+  .stack td{display:block;border:0;padding:4px 0}
+  .stack td.fid{display:inline}
+  .stack td[data-l=Evidence]::before{content:"Evidence";display:block;font-size:13px;color:var(--muted);margin:6px 0 4px}
+  #diagram{min-height:300px}
+  .dscroll{max-height:72vh;overflow:auto;overscroll-behavior:contain}
+  .stack tr{grid-template-columns:auto 1fr;column-gap:10px}
+  .stack td.what,.stack td[data-l=Evidence]{grid-column:1 / -1}
+}
+</style>
+</head>
+<body>
+<header class="band top">
+  <div class="wrap">
+    <p class="repo">Source of truth: $repo_line</p>
+    <h1>$headline</h1>
+    <p class="lede">$summary</p>
+    <div class="figs">
+      <div class="fig-n"><b>$n_states</b><span>states mapped: $n_ui screens, $n_sys system</span></div>
+      <div class="fig-n"><b class="hot">$n_high</b><span>high-severity issues</span></div>
+      <div class="fig-n">$fig3</div>
+      <div class="fig-n"><b>$best</b><span>$goal_phrase</span></div>
+    </div>
+  </div>
+</header>
+
+<section class="band" style="padding-top:8px">
+  <div class="wrap sheet">
+    <div class="diagram-head">
+      <h2>The flow as the code runs it</h2>
+      <ul class="legend">
+        <li><i></i>Screen</li>
+        <li><i class="s"></i>System step</li>
+        <li><i class="h"></i>High-severity</li>
+        <li><i class="m"></i>Medium</li>
+        <li><i class="g"></i>Ghost: no screen</li>
+        <li><i class="u"></i>User action</li>
+        <li><i class="d"></i>System event</li>
+      </ul>
+    </div>
+    <div class="scroll dscroll"><div id="diagram" role="img" aria-label="State diagram of the flow. Friction states are marked with issue numbers that match the table below."></div></div>
+    <p class="hidden-note">$hidden_note Faint arrows are ways back to an earlier step.</p>
+  </div>
+</section>
+
+<section class="band" style="padding-top:8px">
+  <div class="wrap">
+    <h2 class="sec">Issues, worst first</h2>
+    <p class="sec-sub">$issues_sub</p>
+    <div class="scroll">
+      <table class="stack">
+        <colgroup><col class="c-id"><col class="c-sev"><col><col class="c-ev"></colgroup>
+        <thead><tr><th>#</th><th>Severity</th><th>What happens</th><th>Evidence</th></tr></thead>
+        <tbody>
+$rows
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+$planted_section
+
+<section class="band" style="padding-top:8px">
+  <div class="wrap paths">
+    $paths
+    <div class="method">
+      <h3 style="margin:0 0 10px;font-size:18px">How this was made</h3>
+      <p>$generated_note</p>
+      <p>Graph checks find dead ends, traps, loading states nothing resolves, ghost states, silent failures and loops that undo progress. A code review adds what the graph can't see. Severity drops a level for paths that only happen rarely.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="band foot"><div class="wrap">Generated by frictionmap from $n_states states and $n_trans transitions.</div></footer>
+
+<script type="text/plain" id="mmd">$mmd</script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+{
+  var root = document.documentElement;
+  var el = document.getElementById("diagram");
+  var src = document.getElementById("mmd").textContent;
+  function isDark() {
+    var t = root.getAttribute("data-theme");
+    if (t) return t === "dark";
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }
+  function classDefs(dark) {
+    var ink = dark ? "#ece8e2" : "#111111";
+    var panel = dark ? "#211e1b" : "#ffffff";
+    var brick = dark ? "#e8603f" : "#c8371e";
+    var tint = dark ? "#4a221a" : "#f6ddd6";
+    var sys = dark ? "#2b2723" : "#f1efeb";
+    return [
+      "classDef step fill:" + panel + ",stroke:" + ink + ",stroke-width:1.5px,color:" + ink,
+      "classDef entry fill:" + panel + ",stroke:" + ink + ",stroke-width:2.5px,color:" + ink,
+      "classDef goal fill:" + ink + ",stroke:" + ink + ",color:" + panel,
+      "classDef system fill:" + sys + ",stroke:" + ink + ",stroke-width:1px,color:" + ink,
+      "classDef high fill:" + brick + ",stroke:" + brick + ",color:#ffffff",
+      "classDef medium fill:" + tint + ",stroke:" + brick + ",stroke-width:1.5px,color:" + ink,
+      "classDef ghost fill:" + panel + ",stroke:" + brick + ",stroke-width:2px,stroke-dasharray:6 4,color:" + brick
+    ].join("\n");
+  }
+  var n = 0;
+  function render() {
+    if (!window.mermaid) {
+      el.innerHTML = '<div class="fallback"></div>';
+      el.firstChild.textContent = src;
+      return;
+    }
+    var dark = isDark();
+    window.mermaid.initialize({
+      startOnLoad: false,
+      securityLevel: "strict",
+      theme: "base",
+      flowchart: { curve: "basis", nodeSpacing: 30, rankSpacing: 48, htmlLabels: true, useMaxWidth: false },
+      themeVariables: {
+        fontFamily: "Schibsted Grotesk, system-ui, sans-serif",
+        fontSize: "14px",
+        lineColor: dark ? "#8f887f" : "#5a5650",
+        textColor: dark ? "#ece8e2" : "#111111",
+        edgeLabelBackground: dark ? "#211e1b" : "#ffffff",
+        primaryColor: dark ? "#211e1b" : "#ffffff",
+        primaryBorderColor: dark ? "#ece8e2" : "#111111",
+        primaryTextColor: dark ? "#ece8e2" : "#111111"
+      }
+    });
+    n += 1;
+    window.mermaid.render("fm" + n, src + "\n" + classDefs(dark)).then(function (r) {
+      el.innerHTML = r.svg;
+      var svg = el.querySelector("svg");
+      if (svg && svg.viewBox && svg.viewBox.baseVal) {
+        var nat = svg.viewBox.baseVal.width, cw = el.parentNode.clientWidth - 24;
+        var w = nat <= cw ? nat : Math.max(cw, nat * 0.85);
+        svg.removeAttribute("height");
+        svg.style.width = w + "px";
+        svg.style.maxWidth = "none";
+        var sc = el.parentNode;
+        sc.scrollLeft = Math.max(0, (sc.scrollWidth - sc.clientWidth) / 2);
+      }
+    }).catch(function () {
+      el.innerHTML = '<div class="fallback"></div>';
+      el.firstChild.textContent = src;
+    });
+  }
+  render();
+  new MutationObserver(render).observe(root, { attributes: true, attributeFilter: ["data-theme"] });
+  if (window.matchMedia) {
+    var mq = window.matchMedia("(prefers-color-scheme: dark)");
+    if (mq.addEventListener) mq.addEventListener("change", render);
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1508 @@
+{
+  "flow": "SauceDemo: log in, browse, build a cart",
+  "title": "SauceDemo friction map",
+  "headline": "Beyond its 12 planted bugs, SauceDemo has 3 serious problems any user can hit",
+  "summary": "SauceDemo is Sauce Labs' practice app, with bugs planted on purpose for its test accounts. I mapped login, browsing, product pages and the cart from its source code: every state and arrow cites the line it came from. It surfaced the planted bugs, plus friction that affects every user, not just the test accounts.",
+  "goal_phrase": "fewest clicks from login to a filled cart",
+  "primary_entry": "login",
+  "repo": {
+    "name": "saucelabs/sample-app-web",
+    "url": "https://github.com/saucelabs/sample-app-web",
+    "commit": "d5cd655fa8a974f4ddb6fde2868586e0084211d2"
+  },
+  "method_note": "Static reading of the app's source at the commit above, covering login, the product list, product pages, the cart and the side menu. Later pages and the experimental catalog pages were not mapped.",
+  "states": [
+    {
+      "id": "login",
+      "label": "Login page",
+      "layer": "ui",
+      "kind": "entry",
+      "evidence": [
+        {
+          "file": "src/pages/Login.jsx",
+          "lines": "82-157",
+          "note": "Username, password, Login button"
+        }
+      ]
+    },
+    {
+      "id": "deep_link",
+      "label": "Opens a link to a page",
+      "layer": "ui",
+      "kind": "entry",
+      "condition": "Bookmark, shared link, or the next click after the session ends",
+      "evidence": [
+        {
+          "file": "src/components/PrivateRoute.jsx",
+          "lines": "11-18",
+          "note": "Every page except login is wrapped in PrivateRoute"
+        }
+      ]
+    },
+    {
+      "id": "unknown_url",
+      "label": "Mistyped or old URL",
+      "layer": "ui",
+      "kind": "entry",
+      "evidence": [
+        {
+          "file": "src/index.jsx",
+          "lines": "36-86",
+          "note": "Routes list, with no catch-all route"
+        }
+      ]
+    },
+    {
+      "id": "blank_page",
+      "label": "Blank white page",
+      "layer": "ui",
+      "kind": "error",
+      "likelihood": "edge",
+      "condition": "Any URL that matches no route, when the host serves the app for it",
+      "issue": "A mistyped or old URL shows a blank page with no way out",
+      "impact": "There is no 404 route. When nothing matches, React Router renders nothing: no header, no menu, no link home. The only way out is editing the address bar.",
+      "fix": "Add a catch-all route that shows a 'page not found' message with a link to the product list.",
+      "evidence": [
+        {
+          "file": "src/index.jsx",
+          "lines": "36-86",
+          "note": "No path=\"*\" route"
+        },
+        {
+          "external": "react-router-dom 7 (package.json ^7.18.3)",
+          "note": "<Routes> renders nothing when no route matches"
+        }
+      ]
+    },
+    {
+      "id": "sys_verify",
+      "label": "Check username and password",
+      "layer": "system",
+      "kind": "step",
+      "surfaced": true,
+      "evidence": [
+        {
+          "file": "src/pages/Login.jsx",
+          "lines": "34-44"
+        },
+        {
+          "file": "src/utils/Credentials.js",
+          "lines": "12-18"
+        }
+      ]
+    },
+    {
+      "id": "login_error",
+      "label": "Login error message",
+      "layer": "ui",
+      "kind": "error",
+      "evidence": [
+        {
+          "file": "src/pages/Login.jsx",
+          "lines": "36-42",
+          "note": "Missing username or password"
+        },
+        {
+          "file": "src/pages/Login.jsx",
+          "lines": "60-68",
+          "note": "Wrong credentials"
+        },
+        {
+          "file": "src/pages/Login.jsx",
+          "lines": "115-119",
+          "note": "Inline message, dismissible"
+        }
+      ]
+    },
+    {
+      "id": "locked_out",
+      "label": "'This user has been locked out'",
+      "layer": "ui",
+      "kind": "error",
+      "planted": "locked_out_user",
+      "evidence": [
+        {
+          "file": "src/pages/Login.jsx",
+          "lines": "47-56",
+          "note": "Session cookie set, then the error shown"
+        }
+      ]
+    },
+    {
+      "id": "login_redirected",
+      "label": "Login with 'You can only access ... when logged in'",
+      "layer": "ui",
+      "kind": "error",
+      "evidence": [
+        {
+          "file": "src/pages/Login.jsx",
+          "lines": "22-28",
+          "note": "Message built from the page they tried to open"
+        },
+        {
+          "file": "src/components/PrivateRoute.jsx",
+          "lines": "16",
+          "note": "Redirect saves the page they wanted in state.from"
+        }
+      ]
+    },
+    {
+      "id": "sys_verify_return",
+      "label": "Log back in",
+      "layer": "system",
+      "kind": "step",
+      "surfaced": true,
+      "evidence": [
+        {
+          "file": "src/pages/Login.jsx",
+          "lines": "44-59"
+        }
+      ]
+    },
+    {
+      "id": "frozen_list",
+      "label": "Page frozen for 5 seconds",
+      "layer": "ui",
+      "kind": "loading",
+      "planted": "performance_glitch_user",
+      "evidence": [
+        {
+          "file": "src/pages/Inventory.jsx",
+          "lines": "24-36",
+          "note": "Busy-wait loop blocks the browser on every render"
+        }
+      ]
+    },
+    {
+      "id": "inventory",
+      "label": "Product list",
+      "layer": "ui",
+      "kind": "step",
+      "evidence": [
+        {
+          "file": "src/pages/Inventory.jsx",
+          "lines": "82-135"
+        }
+      ]
+    },
+    {
+      "id": "sys_sort",
+      "label": "Re-sort the list",
+      "layer": "system",
+      "kind": "step",
+      "surfaced": true,
+      "evidence": [
+        {
+          "file": "src/pages/Inventory.jsx",
+          "lines": "62-79"
+        }
+      ]
+    },
+    {
+      "id": "sys_sort_skipped",
+      "label": "Sort request ignored",
+      "layer": "system",
+      "kind": "error",
+      "surfaced": false,
+      "planted": "problem_user",
+      "issue": "Sorting does nothing",
+      "impact": "Picking a sort option returns before anything changes. No message.",
+      "evidence": [
+        {
+          "file": "src/pages/Inventory.jsx",
+          "lines": "47-50",
+          "note": "Returns early for problem_user"
+        }
+      ]
+    },
+    {
+      "id": "sort_alert",
+      "label": "Alert: 'Sorting is broken!'",
+      "layer": "ui",
+      "kind": "error",
+      "planted": "error_user",
+      "evidence": [
+        {
+          "file": "src/pages/Inventory.jsx",
+          "lines": "51-59",
+          "note": "Reports to Backtrace, then a browser alert"
+        }
+      ]
+    },
+    {
+      "id": "sys_add",
+      "label": "Save item to cart",
+      "layer": "system",
+      "kind": "step",
+      "surfaced": true,
+      "evidence": [
+        {
+          "file": "src/utils/shopping-cart.js",
+          "lines": "2-14",
+          "note": "Writes to localStorage"
+        },
+        {
+          "file": "src/components/InventoryListItem.jsx",
+          "lines": "46-47",
+          "note": "Button flips to Remove"
+        },
+        {
+          "file": "src/components/CartButton.jsx",
+          "lines": "16-27",
+          "note": "Badge count updates"
+        }
+      ]
+    },
+    {
+      "id": "inventory_added",
+      "label": "Product list, item in cart",
+      "layer": "ui",
+      "kind": "step",
+      "evidence": [
+        {
+          "file": "src/components/InventoryListItem.jsx",
+          "lines": "46-47",
+          "note": "Button now says Remove"
+        },
+        {
+          "file": "src/components/CartButton.jsx",
+          "lines": "24-29",
+          "note": "Badge shows the count"
+        }
+      ]
+    },
+    {
+      "id": "sys_add_skipped",
+      "label": "Add to cart ignored",
+      "layer": "system",
+      "kind": "error",
+      "surfaced": false,
+      "planted": "problem_user",
+      "issue": "Some Add to cart clicks do nothing",
+      "impact": "For odd-numbered products, the click returns before saving. The button doesn't change and nothing says why.",
+      "evidence": [
+        {
+          "file": "src/components/InventoryListItem.jsx",
+          "lines": "33-38"
+        },
+        {
+          "file": "src/pages/InventoryItem.jsx",
+          "lines": "70-75"
+        }
+      ]
+    },
+    {
+      "id": "sys_remove_skipped",
+      "label": "Remove ignored",
+      "layer": "system",
+      "kind": "error",
+      "surfaced": false,
+      "planted": "problem_user",
+      "issue": "Some Remove clicks do nothing",
+      "impact": "For even-numbered products, Remove returns before changing anything. No message.",
+      "evidence": [
+        {
+          "file": "src/components/InventoryListItem.jsx",
+          "lines": "57-62"
+        },
+        {
+          "file": "src/pages/InventoryItem.jsx",
+          "lines": "94-99"
+        }
+      ]
+    },
+    {
+      "id": "sys_cart_throw",
+      "label": "Add or Remove throws an error",
+      "layer": "system",
+      "kind": "error",
+      "surfaced": false,
+      "planted": "error_user",
+      "issue": "Some Add and Remove clicks throw, and nothing happens on screen",
+      "impact": "The click handler throws. React error boundaries don't catch errors in event handlers, so the screen doesn't change. The error goes to Backtrace; the user sees nothing.",
+      "evidence": [
+        {
+          "file": "src/components/InventoryListItem.jsx",
+          "lines": "39-44"
+        },
+        {
+          "file": "src/components/InventoryListItem.jsx",
+          "lines": "63-68"
+        },
+        {
+          "file": "src/pages/InventoryItem.jsx",
+          "lines": "76-81"
+        },
+        {
+          "file": "src/pages/InventoryItem.jsx",
+          "lines": "100-105"
+        },
+        {
+          "external": "React docs, error boundaries",
+          "note": "Error boundaries do not catch errors inside event handlers"
+        }
+      ]
+    },
+    {
+      "id": "product_page",
+      "label": "Product details",
+      "layer": "ui",
+      "kind": "step",
+      "evidence": [
+        {
+          "file": "src/pages/InventoryItem.jsx",
+          "lines": "136-219"
+        }
+      ]
+    },
+    {
+      "id": "desc_fallback",
+      "label": "Product page, description failed",
+      "layer": "ui",
+      "kind": "step",
+      "planted": "error_user",
+      "evidence": [
+        {
+          "file": "src/pages/InventoryItem.jsx",
+          "lines": "184-206",
+          "note": "Error boundary shows a fallback message"
+        },
+        {
+          "file": "src/components/BrokenComponent.jsx",
+          "lines": "1-3",
+          "note": "Always throws"
+        }
+      ]
+    },
+    {
+      "id": "product_not_found",
+      "label": "'ITEM NOT FOUND' page",
+      "layer": "ui",
+      "kind": "step",
+      "condition": "Missing or out-of-range ?id in the URL",
+      "evidence": [
+        {
+          "file": "src/pages/InventoryItem.jsx",
+          "lines": "21-43",
+          "note": "Missing id means -1; out of range means a joke placeholder item"
+        },
+        {
+          "file": "src/pages/InventoryItem.jsx",
+          "lines": "214-218",
+          "note": "Add to cart button still rendered"
+        }
+      ]
+    },
+    {
+      "id": "sys_add_phantom",
+      "label": "Item that doesn't exist saved to cart",
+      "layer": "system",
+      "kind": "error",
+      "surfaced": false,
+      "likelihood": "edge",
+      "condition": "Add to cart on the 'ITEM NOT FOUND' page (a bad link, or problem_user opening the last product)",
+      "issue": "You can add an item that doesn't exist, and then you can't remove it",
+      "impact": "The not-found page still offers Add to cart. It saves the bad id, the button flips to Remove, and the cart badge counts it. The cart page has no row for it, so it can't be removed there. The badge stays wrong until someone finds Reset App State in the menu.",
+      "fix": "Hide Add to cart when the item isn't found, and drop unknown ids when reading the cart.",
+      "evidence": [
+        {
+          "file": "src/pages/InventoryItem.jsx",
+          "lines": "83-84",
+          "note": "Saves whatever id the page has"
+        },
+        {
+          "file": "src/utils/shopping-cart.js",
+          "lines": "2-14",
+          "note": "No check that the id is a real product"
+        },
+        {
+          "file": "src/components/CartButton.jsx",
+          "lines": "24-27",
+          "note": "Badge counts every saved id"
+        },
+        {
+          "file": "src/pages/Cart.jsx",
+          "lines": "40-42",
+          "note": "Looks up each id; unknown ids are undefined"
+        },
+        {
+          "file": "src/components/CartItem.jsx",
+          "lines": "18-20",
+          "note": "Undefined item renders an empty div, with no Remove button"
+        }
+      ]
+    },
+    {
+      "id": "cart",
+      "label": "Cart with chosen items",
+      "layer": "ui",
+      "kind": "goal",
+      "evidence": [
+        {
+          "file": "src/pages/Cart.jsx",
+          "lines": "13-75"
+        }
+      ]
+    },
+    {
+      "id": "sys_remove",
+      "label": "Remove item from cart",
+      "layer": "system",
+      "kind": "step",
+      "surfaced": true,
+      "evidence": [
+        {
+          "file": "src/utils/shopping-cart.js",
+          "lines": "16-29"
+        },
+        {
+          "file": "src/components/CartItem.jsx",
+          "lines": "13-16"
+        }
+      ]
+    },
+    {
+      "id": "sys_reset",
+      "label": "Reset App State empties cart",
+      "layer": "system",
+      "kind": "step",
+      "surfaced": true,
+      "evidence": [
+        {
+          "file": "src/components/DrawerMenu.jsx",
+          "lines": "20-23"
+        },
+        {
+          "file": "src/components/DrawerMenu.jsx",
+          "lines": "152-164"
+        },
+        {
+          "file": "src/utils/shopping-cart.js",
+          "lines": "64-72",
+          "note": "Clears storage and notifies registered listeners"
+        }
+      ]
+    },
+    {
+      "id": "inventory_stale",
+      "label": "Buttons still say Remove for an empty cart",
+      "layer": "ui",
+      "kind": "error",
+      "issue": "After Reset App State, the product list still shows items as in the cart",
+      "impact": "Reset empties the cart and the badge clears, but every product button keeps saying Remove. Only the badge listens for cart changes; each button keeps its own copy, read once when the page loaded. The screen contradicts the cart until the user leaves the page and comes back.",
+      "fix": "Have product buttons read cart state from one shared source, or subscribe to cart changes like the badge does.",
+      "evidence": [
+        {
+          "file": "src/components/InventoryListItem.jsx",
+          "lines": "22",
+          "note": "Button state copied once on mount"
+        },
+        {
+          "file": "src/components/CartButton.jsx",
+          "lines": "16-22",
+          "note": "Only the badge registers a listener"
+        }
+      ]
+    },
+    {
+      "id": "sys_session_expired",
+      "label": "Session ends 10 minutes after login",
+      "layer": "system",
+      "kind": "error",
+      "surfaced": false,
+      "likelihood": "common",
+      "condition": "Ten minutes after logging in, active or not",
+      "issue": "Sessions end 10 minutes after login, even mid-use, with no warning",
+      "impact": "The session cookie is set once at login with a fixed 10-minute expiry, and nothing extends it while you shop. The next page change throws you to the login screen with 'You can only access /cart.html when you are logged in', which reads like you did something wrong.",
+      "fix": "Extend the session on activity, warn before it ends, and word the message as 'Your session timed out'.",
+      "evidence": [
+        {
+          "file": "src/utils/Credentials.js",
+          "lines": "27-32",
+          "note": "Fixed expiry: now + 10 minutes, set only at login"
+        },
+        {
+          "file": "src/components/PrivateRoute.jsx",
+          "lines": "13-17",
+          "note": "Checked on every page change"
+        },
+        {
+          "file": "src/pages/Login.jsx",
+          "lines": "22-28",
+          "note": "Message shown after the redirect"
+        }
+      ]
+    },
+    {
+      "id": "sys_logout",
+      "label": "Log out (cart kept)",
+      "layer": "system",
+      "kind": "step",
+      "surfaced": true,
+      "evidence": [
+        {
+          "file": "src/components/DrawerMenu.jsx",
+          "lines": "138-151",
+          "note": "Removes the session cookie only"
+        },
+        {
+          "file": "src/utils/Credentials.js",
+          "lines": "37-39"
+        }
+      ]
+    }
+  ],
+  "transitions": [
+    {
+      "from": "login",
+      "to": "sys_verify",
+      "trigger": "user",
+      "label": "Log in",
+      "evidence": [
+        {
+          "file": "src/pages/Login.jsx",
+          "lines": "90"
+        },
+        {
+          "file": "src/pages/Login.jsx",
+          "lines": "120-126"
+        }
+      ]
+    },
+    {
+      "from": "sys_verify",
+      "to": "inventory",
+      "trigger": "system",
+      "kind": "redirect",
+      "label": "Valid user",
+      "effects": [
+        "sets session cookie (10 min)"
+      ],
+      "evidence": [
+        {
+          "file": "src/pages/Login.jsx",
+          "lines": "44-59"
+        }
+      ]
+    },
+    {
+      "from": "sys_verify",
+      "to": "frozen_list",
+      "trigger": "system",
+      "kind": "redirect",
+      "label": "performance_glitch_user",
+      "evidence": [
+        {
+          "file": "src/pages/Inventory.jsx",
+          "lines": "33-36"
+        }
+      ]
+    },
+    {
+      "from": "frozen_list",
+      "to": "inventory",
+      "trigger": "system",
+      "label": "After 5 seconds",
+      "evidence": [
+        {
+          "file": "src/pages/Inventory.jsx",
+          "lines": "24-29"
+        }
+      ]
+    },
+    {
+      "from": "sys_verify",
+      "to": "login_error",
+      "trigger": "system",
+      "kind": "failure",
+      "feedback": "inline",
+      "label": "Missing or wrong",
+      "evidence": [
+        {
+          "file": "src/pages/Login.jsx",
+          "lines": "36-42"
+        },
+        {
+          "file": "src/pages/Login.jsx",
+          "lines": "60-68"
+        }
+      ]
+    },
+    {
+      "from": "login_error",
+      "to": "sys_verify",
+      "trigger": "user",
+      "kind": "retry",
+      "label": "Try again",
+      "evidence": [
+        {
+          "file": "src/pages/Login.jsx",
+          "lines": "90-126"
+        }
+      ]
+    },
+    {
+      "from": "sys_verify",
+      "to": "locked_out",
+      "trigger": "system",
+      "kind": "failure",
+      "feedback": "inline",
+      "label": "locked_out_user",
+      "evidence": [
+        {
+          "file": "src/pages/Login.jsx",
+          "lines": "49-56"
+        }
+      ]
+    },
+    {
+      "from": "locked_out",
+      "to": "sys_verify",
+      "trigger": "user",
+      "kind": "retry",
+      "label": "Try another user",
+      "evidence": [
+        {
+          "file": "src/pages/Login.jsx",
+          "lines": "90-126"
+        }
+      ]
+    },
+    {
+      "from": "deep_link",
+      "to": "login_redirected",
+      "trigger": "system",
+      "kind": "redirect",
+      "label": "Not logged in",
+      "evidence": [
+        {
+          "file": "src/components/PrivateRoute.jsx",
+          "lines": "13-17"
+        }
+      ]
+    },
+    {
+      "from": "unknown_url",
+      "to": "blank_page",
+      "trigger": "system",
+      "kind": "failure",
+      "feedback": "none",
+      "label": "No route matches",
+      "evidence": [
+        {
+          "file": "src/index.jsx",
+          "lines": "36-86"
+        }
+      ]
+    },
+    {
+      "from": "login_redirected",
+      "to": "sys_verify_return",
+      "trigger": "user",
+      "label": "Log in again",
+      "evidence": [
+        {
+          "file": "src/pages/Login.jsx",
+          "lines": "90-126"
+        }
+      ]
+    },
+    {
+      "from": "sys_verify_return",
+      "to": "inventory",
+      "trigger": "system",
+      "kind": "redirect",
+      "label": "Always the product list",
+      "resets_progress": true,
+      "issue": "Logging back in forgets where you were",
+      "note": "The redirect to login saves the page you were on, but login ignores it and always opens the product list. Anyone sent to log in from the cart or a product page has to find their way back.",
+      "evidence": [
+        {
+          "file": "src/components/PrivateRoute.jsx",
+          "lines": "16",
+          "note": "state.from saved"
+        },
+        {
+          "file": "src/pages/Login.jsx",
+          "lines": "58-59",
+          "note": "Always history.push(ROUTES.INVENTORY)"
+        }
+      ]
+    },
+    {
+      "from": "sys_verify_return",
+      "to": "login_error",
+      "trigger": "system",
+      "kind": "failure",
+      "feedback": "inline",
+      "label": "Missing or wrong",
+      "evidence": [
+        {
+          "file": "src/pages/Login.jsx",
+          "lines": "36-42"
+        }
+      ]
+    },
+    {
+      "from": "inventory",
+      "to": "sys_sort",
+      "trigger": "user",
+      "label": "Choose a sort",
+      "evidence": [
+        {
+          "file": "src/pages/Inventory.jsx",
+          "lines": "88-99"
+        }
+      ]
+    },
+    {
+      "from": "sys_sort",
+      "to": "inventory",
+      "trigger": "system",
+      "label": "List re-sorted",
+      "evidence": [
+        {
+          "file": "src/pages/Inventory.jsx",
+          "lines": "62-79"
+        }
+      ]
+    },
+    {
+      "from": "sys_sort",
+      "to": "sys_sort_skipped",
+      "trigger": "system",
+      "kind": "failure",
+      "label": "problem_user",
+      "evidence": [
+        {
+          "file": "src/pages/Inventory.jsx",
+          "lines": "47-50"
+        }
+      ]
+    },
+    {
+      "from": "sys_sort_skipped",
+      "to": "inventory",
+      "trigger": "system",
+      "kind": "failure",
+      "feedback": "none",
+      "label": "Nothing changes",
+      "evidence": [
+        {
+          "file": "src/pages/Inventory.jsx",
+          "lines": "50"
+        }
+      ]
+    },
+    {
+      "from": "sys_sort",
+      "to": "sort_alert",
+      "trigger": "system",
+      "kind": "failure",
+      "feedback": "page",
+      "label": "error_user",
+      "evidence": [
+        {
+          "file": "src/pages/Inventory.jsx",
+          "lines": "51-59"
+        }
+      ]
+    },
+    {
+      "from": "sort_alert",
+      "to": "inventory",
+      "trigger": "user",
+      "label": "Dismiss",
+      "evidence": [
+        {
+          "file": "src/pages/Inventory.jsx",
+          "lines": "57-59"
+        }
+      ]
+    },
+    {
+      "from": "inventory",
+      "to": "sys_add",
+      "trigger": "user",
+      "label": "Add to cart",
+      "evidence": [
+        {
+          "file": "src/components/InventoryListItem.jsx",
+          "lines": "87-105"
+        },
+        {
+          "file": "src/components/InventoryListItem.jsx",
+          "lines": "165-170"
+        }
+      ]
+    },
+    {
+      "from": "sys_add",
+      "to": "inventory_added",
+      "trigger": "system",
+      "label": "Button flips, badge counts",
+      "evidence": [
+        {
+          "file": "src/components/InventoryListItem.jsx",
+          "lines": "46-47"
+        }
+      ]
+    },
+    {
+      "from": "sys_add",
+      "to": "sys_add_skipped",
+      "trigger": "system",
+      "kind": "failure",
+      "label": "problem_user, odd ids",
+      "evidence": [
+        {
+          "file": "src/components/InventoryListItem.jsx",
+          "lines": "33-38"
+        }
+      ]
+    },
+    {
+      "from": "sys_add_skipped",
+      "to": "inventory",
+      "trigger": "system",
+      "kind": "failure",
+      "feedback": "none",
+      "label": "Nothing changes",
+      "evidence": [
+        {
+          "file": "src/components/InventoryListItem.jsx",
+          "lines": "37"
+        }
+      ]
+    },
+    {
+      "from": "inventory",
+      "to": "sys_remove_skipped",
+      "trigger": "user",
+      "kind": "failure",
+      "label": "Remove (problem_user, even ids)",
+      "evidence": [
+        {
+          "file": "src/components/InventoryListItem.jsx",
+          "lines": "57-62"
+        }
+      ]
+    },
+    {
+      "from": "sys_remove_skipped",
+      "to": "inventory",
+      "trigger": "system",
+      "kind": "failure",
+      "feedback": "none",
+      "label": "Nothing changes",
+      "evidence": [
+        {
+          "file": "src/components/InventoryListItem.jsx",
+          "lines": "61"
+        }
+      ]
+    },
+    {
+      "from": "sys_add",
+      "to": "sys_cart_throw",
+      "trigger": "system",
+      "kind": "failure",
+      "label": "error_user, odd ids",
+      "evidence": [
+        {
+          "file": "src/components/InventoryListItem.jsx",
+          "lines": "39-44"
+        }
+      ]
+    },
+    {
+      "from": "sys_cart_throw",
+      "to": "inventory",
+      "trigger": "system",
+      "kind": "failure",
+      "feedback": "none",
+      "label": "Uncaught, screen unchanged",
+      "evidence": [
+        {
+          "file": "src/components/InventoryListItem.jsx",
+          "lines": "42"
+        }
+      ]
+    },
+    {
+      "from": "inventory",
+      "to": "product_page",
+      "trigger": "user",
+      "label": "Open a product",
+      "evidence": [
+        {
+          "file": "src/components/InventoryListItem.jsx",
+          "lines": "73-77"
+        },
+        {
+          "file": "src/components/InventoryListItem.jsx",
+          "lines": "113-123"
+        }
+      ]
+    },
+    {
+      "from": "inventory",
+      "to": "desc_fallback",
+      "trigger": "user",
+      "label": "Open a product (error_user)",
+      "evidence": [
+        {
+          "file": "src/pages/InventoryItem.jsx",
+          "lines": "196-205"
+        }
+      ]
+    },
+    {
+      "from": "inventory",
+      "to": "product_not_found",
+      "trigger": "user",
+      "label": "Open last product (problem_user)",
+      "evidence": [
+        {
+          "file": "src/components/InventoryListItem.jsx",
+          "lines": "73-77",
+          "note": "Link id + 1; the last product points past the list"
+        }
+      ]
+    },
+    {
+      "from": "deep_link",
+      "to": "product_not_found",
+      "trigger": "system",
+      "kind": "redirect",
+      "label": "Logged in, bad ?id",
+      "evidence": [
+        {
+          "file": "src/pages/InventoryItem.jsx",
+          "lines": "21-43"
+        }
+      ]
+    },
+    {
+      "from": "product_page",
+      "to": "inventory",
+      "trigger": "user",
+      "kind": "back",
+      "label": "Back to products",
+      "evidence": [
+        {
+          "file": "src/pages/InventoryItem.jsx",
+          "lines": "59-61"
+        },
+        {
+          "file": "src/pages/InventoryItem.jsx",
+          "lines": "141-148"
+        }
+      ]
+    },
+    {
+      "from": "product_page",
+      "to": "sys_add",
+      "trigger": "user",
+      "label": "Add to cart",
+      "evidence": [
+        {
+          "file": "src/pages/InventoryItem.jsx",
+          "lines": "70-85"
+        }
+      ]
+    },
+    {
+      "from": "desc_fallback",
+      "to": "inventory",
+      "trigger": "user",
+      "kind": "back",
+      "label": "Back to products",
+      "evidence": [
+        {
+          "file": "src/pages/InventoryItem.jsx",
+          "lines": "59-61"
+        }
+      ]
+    },
+    {
+      "from": "product_not_found",
+      "to": "inventory",
+      "trigger": "user",
+      "kind": "back",
+      "label": "Back to products",
+      "evidence": [
+        {
+          "file": "src/pages/InventoryItem.jsx",
+          "lines": "59-61"
+        }
+      ]
+    },
+    {
+      "from": "product_not_found",
+      "to": "sys_add_phantom",
+      "trigger": "user",
+      "label": "Add to cart",
+      "evidence": [
+        {
+          "file": "src/pages/InventoryItem.jsx",
+          "lines": "214-218"
+        },
+        {
+          "file": "src/pages/InventoryItem.jsx",
+          "lines": "83-84"
+        }
+      ]
+    },
+    {
+      "from": "sys_add_phantom",
+      "to": "product_not_found",
+      "trigger": "system",
+      "kind": "failure",
+      "feedback": "none",
+      "label": "Looks like it worked",
+      "evidence": [
+        {
+          "file": "src/pages/InventoryItem.jsx",
+          "lines": "84",
+          "note": "Button flips to Remove"
+        }
+      ]
+    },
+    {
+      "from": "cart",
+      "to": "sys_remove",
+      "trigger": "user",
+      "label": "Remove",
+      "evidence": [
+        {
+          "file": "src/components/CartItem.jsx",
+          "lines": "62-72"
+        }
+      ]
+    },
+    {
+      "from": "sys_remove",
+      "to": "cart",
+      "trigger": "system",
+      "label": "Row disappears",
+      "evidence": [
+        {
+          "file": "src/components/CartItem.jsx",
+          "lines": "13-20"
+        }
+      ]
+    },
+    {
+      "from": "cart",
+      "to": "inventory",
+      "trigger": "user",
+      "kind": "back",
+      "label": "Continue Shopping",
+      "evidence": [
+        {
+          "file": "src/pages/Cart.jsx",
+          "lines": "45-54"
+        }
+      ]
+    },
+    {
+      "from": "inventory",
+      "to": "sys_reset",
+      "trigger": "user",
+      "label": "Reset App State (menu)",
+      "effects": [
+        "clears cart from localStorage"
+      ],
+      "evidence": [
+        {
+          "file": "src/components/DrawerMenu.jsx",
+          "lines": "152-164"
+        }
+      ]
+    },
+    {
+      "from": "sys_reset",
+      "to": "inventory_stale",
+      "trigger": "system",
+      "kind": "failure",
+      "feedback": "none",
+      "label": "Only the badge hears it",
+      "evidence": [
+        {
+          "file": "src/utils/shopping-cart.js",
+          "lines": "64-72"
+        },
+        {
+          "file": "src/components/InventoryListItem.jsx",
+          "lines": "22"
+        }
+      ]
+    },
+    {
+      "from": "inventory_stale",
+      "to": "inventory",
+      "trigger": "user",
+      "label": "Leave and come back",
+      "evidence": [
+        {
+          "file": "src/components/InventoryListItem.jsx",
+          "lines": "22",
+          "note": "Remount re-reads the cart"
+        }
+      ]
+    },
+    {
+      "from": "inventory",
+      "to": "sys_session_expired",
+      "trigger": "system",
+      "kind": "failure",
+      "label": "10 minutes after login",
+      "evidence": [
+        {
+          "file": "src/utils/Credentials.js",
+          "lines": "27-32"
+        }
+      ]
+    },
+    {
+      "from": "sys_session_expired",
+      "to": "login_redirected",
+      "trigger": "system",
+      "kind": "redirect",
+      "label": "On the next page change",
+      "evidence": [
+        {
+          "file": "src/components/PrivateRoute.jsx",
+          "lines": "13-17"
+        }
+      ]
+    },
+    {
+      "from": "inventory",
+      "to": "sys_logout",
+      "trigger": "user",
+      "label": "Logout (menu)",
+      "evidence": [
+        {
+          "file": "src/components/DrawerMenu.jsx",
+          "lines": "138-151"
+        }
+      ]
+    },
+    {
+      "from": "sys_logout",
+      "to": "login",
+      "trigger": "system",
+      "kind": "redirect",
+      "label": "Back to login",
+      "evidence": [
+        {
+          "file": "src/components/DrawerMenu.jsx",
+          "lines": "144-145"
+        }
+      ]
+    },
+    {
+      "from": "product_page",
+      "to": "sys_session_expired",
+      "trigger": "system",
+      "kind": "failure",
+      "label": "10 minutes after login",
+      "evidence": [
+        {
+          "file": "src/utils/Credentials.js",
+          "lines": "27-32"
+        }
+      ]
+    },
+    {
+      "from": "cart",
+      "to": "sys_session_expired",
+      "trigger": "system",
+      "kind": "failure",
+      "label": "10 minutes after login",
+      "evidence": [
+        {
+          "file": "src/utils/Credentials.js",
+          "lines": "27-32"
+        }
+      ]
+    },
+    {
+      "from": "inventory_added",
+      "to": "cart",
+      "trigger": "user",
+      "label": "Open cart",
+      "evidence": [
+        {
+          "file": "src/components/CartButton.jsx",
+          "lines": "32-36"
+        }
+      ]
+    },
+    {
+      "from": "inventory_added",
+      "to": "sys_add",
+      "trigger": "user",
+      "label": "Add another",
+      "evidence": [
+        {
+          "file": "src/components/InventoryListItem.jsx",
+          "lines": "87-105"
+        }
+      ]
+    }
+  ],
+  "global_transitions": [
+    {
+      "to": "cart",
+      "label": "Cart icon",
+      "kind": "forward",
+      "from_layer": "ui",
+      "only": [
+        "inventory",
+        "product_page",
+        "desc_fallback",
+        "product_not_found",
+        "inventory_stale"
+      ],
+      "evidence": [
+        {
+          "file": "src/components/HeaderContainer.jsx",
+          "lines": "72",
+          "note": "Cart icon in the header of every signed-in page"
+        },
+        {
+          "file": "src/components/CartButton.jsx",
+          "lines": "32-36"
+        }
+      ],
+      "shortcut": true
+    }
+  ],
+  "manual_findings": [
+    {
+      "title": "Logging out keeps the cart for the next person",
+      "severity": "medium",
+      "state": "sys_logout",
+      "check": "review",
+      "detail": "The cart lives in the browser's localStorage, not with the account. Logout only removes the session cookie, so whoever logs in next on the same browser sees the previous person's cart.",
+      "fix": "Clear the cart on logout, or store it per user.",
+      "evidence": [
+        {
+          "file": "src/components/DrawerMenu.jsx",
+          "lines": "142-146",
+          "note": "removeCredentials() only"
+        },
+        {
+          "file": "src/utils/shopping-cart.js",
+          "lines": "39-56",
+          "note": "One global 'cart-contents' key"
+        }
+      ]
+    },
+    {
+      "title": "The sort order resets every time you come back to the list",
+      "severity": "low",
+      "state": "inventory",
+      "check": "review",
+      "detail": "The list always starts sorted A to Z. Open a product and press Back, or tap Continue Shopping in the cart, and your chosen sort is gone.",
+      "fix": "Keep the sort in the URL or in storage.",
+      "evidence": [
+        {
+          "file": "src/pages/Inventory.jsx",
+          "lines": "19-22",
+          "note": "Initial state is A to Z on every mount"
+        },
+        {
+          "file": "src/pages/InventoryItem.jsx",
+          "lines": "59-61",
+          "note": "Back pushes a fresh list page"
+        }
+      ]
+    },
+    {
+      "title": "Reset App State wipes the cart with no confirmation and no undo",
+      "severity": "low",
+      "state": "sys_reset",
+      "check": "review",
+      "detail": "One tap in the menu, next to Logout, clears everything.",
+      "evidence": [
+        {
+          "file": "src/components/DrawerMenu.jsx",
+          "lines": "138-164",
+          "note": "Logout and Reset sit next to each other"
+        }
+      ]
+    },
+    {
+      "title": "Cart listeners are added on every mount and never removed",
+      "severity": "info",
+      "state": "sys_add",
+      "check": "code",
+      "detail": "Each time a page with the cart badge mounts, it adds another listener, and none are removed. Over a session, every cart change re-runs listeners for badges that no longer exist.",
+      "evidence": [
+        {
+          "file": "src/components/CartButton.jsx",
+          "lines": "20-22",
+          "note": "No cleanup function"
+        },
+        {
+          "file": "src/utils/shopping-cart.js",
+          "lines": "74-79"
+        }
+      ]
+    },
+    {
+      "key": "pu_images",
+      "planted": "problem_user",
+      "title": "Every product image is broken",
+      "severity": "medium",
+      "state": "inventory",
+      "check": "review",
+      "detail": "Images are swapped for a 404 image.",
+      "evidence": [
+        {
+          "file": "src/pages/Inventory.jsx",
+          "lines": "115-119"
+        }
+      ]
+    },
+    {
+      "key": "pu_wrong_product",
+      "planted": "problem_user",
+      "title": "Products open the wrong product page",
+      "severity": "medium",
+      "state": "product_page",
+      "check": "review",
+      "detail": "Links add 1 to the product id, so each product opens its neighbour, and the last one opens 'ITEM NOT FOUND'.",
+      "evidence": [
+        {
+          "file": "src/components/InventoryListItem.jsx",
+          "lines": "73-77"
+        },
+        {
+          "file": "src/components/CartItem.jsx",
+          "lines": "23-29"
+        }
+      ]
+    },
+    {
+      "key": "pu_about",
+      "planted": "problem_user",
+      "title": "The About link goes to a 404",
+      "severity": "low",
+      "state": "inventory",
+      "check": "review",
+      "detail": "The menu's About link points to an error page.",
+      "evidence": [
+        {
+          "file": "src/components/DrawerMenu.jsx",
+          "lines": "24-26"
+        }
+      ]
+    },
+    {
+      "key": "pg_freeze",
+      "planted": "performance_glitch_user",
+      "title": "The product list freezes for 5 seconds with no indicator",
+      "severity": "medium",
+      "state": "frozen_list",
+      "check": "review",
+      "detail": "A busy loop blocks the browser on every render of the list, so not even a spinner can draw.",
+      "evidence": [
+        {
+          "file": "src/pages/Inventory.jsx",
+          "lines": "24-36"
+        }
+      ]
+    },
+    {
+      "key": "vu_prices",
+      "planted": "visual_user",
+      "title": "Prices change on every render and don't match the cart",
+      "severity": "medium",
+      "state": "inventory",
+      "check": "review",
+      "detail": "List prices are random on each render, while the cart shows the real price. Some elements are also misaligned, and the first image is broken.",
+      "evidence": [
+        {
+          "file": "src/pages/Inventory.jsx",
+          "lines": "30-31"
+        },
+        {
+          "file": "src/pages/Inventory.jsx",
+          "lines": "115-124"
+        },
+        {
+          "file": "src/components/CartItem.jsx",
+          "lines": "55-61",
+          "note": "Cart uses the catalogue price"
+        }
+      ]
+    }
+  ],
+  "ground_truth": [
+    {
+      "persona": "locked_out_user",
+      "bug": "Can't log in",
+      "ref": "locked_out"
+    },
+    {
+      "persona": "problem_user",
+      "bug": "Every product image is broken",
+      "ref": "pu_images"
+    },
+    {
+      "persona": "problem_user",
+      "bug": "Sorting does nothing",
+      "ref": "sys_sort_skipped"
+    },
+    {
+      "persona": "problem_user",
+      "bug": "Some Add to cart clicks do nothing",
+      "ref": "sys_add_skipped"
+    },
+    {
+      "persona": "problem_user",
+      "bug": "Some Remove clicks do nothing",
+      "ref": "sys_remove_skipped"
+    },
+    {
+      "persona": "problem_user",
+      "bug": "Products open the wrong page",
+      "ref": "pu_wrong_product"
+    },
+    {
+      "persona": "problem_user",
+      "bug": "About link goes to a 404",
+      "ref": "pu_about"
+    },
+    {
+      "persona": "error_user",
+      "bug": "Sorting shows an error alert",
+      "ref": "sort_alert"
+    },
+    {
+      "persona": "error_user",
+      "bug": "Some Add and Remove clicks throw",
+      "ref": "sys_cart_throw"
+    },
+    {
+      "persona": "error_user",
+      "bug": "Product description fails to render",
+      "ref": "desc_fallback"
+    },
+    {
+      "persona": "performance_glitch_user",
+      "bug": "Product list freezes for 5 seconds",
+      "ref": "pg_freeze"
+    },
+    {
+      "persona": "visual_user",
+      "bug": "Random prices and misaligned layout",
+      "ref": "vu_prices"
+    }
+  ]
+}

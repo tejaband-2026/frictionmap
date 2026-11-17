@@ -1,0 +1,61 @@
+flowchart TD
+  login["Login page"]
+  deep_link["Opens a link to a page"]
+  unknown_url["Mistyped or old URL"]
+  blank_page["Blank white page<br/>F2"]
+  sys_verify(["Check username and<br/>password"])
+  login_redirected["Login with 'You can<br/>only access ... when<br/>logged in'"]
+  sys_verify_return(["Log back in<br/>F5"])
+  inventory["Product list<br/>F8"]
+  sys_sort(["Re-sort the list"])
+  sys_add(["Save item to cart<br/>F9"])
+  inventory_added["Product list, item in<br/>cart"]
+  product_page["Product details"]
+  product_not_found["'ITEM NOT FOUND' page"]
+  sys_add_phantom(["Item that doesn't<br/>exist saved to cart<br/>F3"])
+  cart(("Cart with chosen items"))
+  sys_remove(["Remove item from cart"])
+  sys_reset(["Reset App State<br/>empties cart<br/>F7"])
+  inventory_stale["Buttons still say<br/>Remove for an empty<br/>cart<br/>F4"]
+  sys_session_expired(["Session ends 10<br/>minutes after login<br/>F1"])
+  sys_logout(["Log out (cart kept)<br/>F6"])
+  login -->|"Log in"| sys_verify
+  sys_verify -.->|"Valid user"| inventory
+  deep_link -.->|"Not logged in"| login_redirected
+  unknown_url -.->|"No route matches"| blank_page
+  login_redirected -->|"Log in again"| sys_verify_return
+  sys_verify_return -.->|"Always the product<br/>list"| inventory
+  inventory -->|"Choose a sort"| sys_sort
+  sys_sort -.->|"List re-sorted"| inventory
+  inventory -->|"Add to cart"| sys_add
+  sys_add -.->|"Button flips,<br/>badge counts"| inventory_added
+  inventory -->|"Open a product"| product_page
+  inventory -->|"Open last product<br/>(problem_user)"| product_not_found
+  deep_link -.->|"Logged in, bad ?id"| product_not_found
+  product_page -->|"Back to products"| inventory
+  product_page -->|"Add to cart"| sys_add
+  product_not_found -->|"Back to products"| inventory
+  product_not_found -->|"Add to cart"| sys_add_phantom
+  sys_add_phantom -.->|"Looks like it<br/>worked"| product_not_found
+  cart -->|"Remove"| sys_remove
+  sys_remove -.->|"Row disappears"| cart
+  cart -->|"Continue Shopping"| inventory
+  inventory -->|"Reset App State<br/>(menu)"| sys_reset
+  sys_reset -.->|"Only the badge<br/>hears it"| inventory_stale
+  inventory_stale -->|"Leave and come<br/>back"| inventory
+  inventory -.->|"10 minutes after<br/>login"| sys_session_expired
+  sys_session_expired -.->|"On the next page<br/>change"| login_redirected
+  inventory -->|"Logout (menu)"| sys_logout
+  sys_logout -.->|"Back to login"| login
+  product_page -.->|"10 minutes after<br/>login"| sys_session_expired
+  cart -.->|"10 minutes after<br/>login"| sys_session_expired
+  inventory_added -->|"Open cart"| cart
+  inventory_added -->|"Add another"| sys_add
+  linkStyle 13,15,20 stroke:#9a948b,stroke-width:1px
+  class login,deep_link,unknown_url entry
+  class blank_page high
+  class sys_verify,sys_sort,sys_add,sys_remove,sys_reset system
+  class login_redirected,inventory,inventory_added,product_page,product_not_found step
+  class sys_verify_return,inventory_stale,sys_logout medium
+  class sys_add_phantom,sys_session_expired ghost
+  class cart goal

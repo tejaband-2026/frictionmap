@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SauceDemo friction map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE  work: an engineering review a PM can hand to a team
+   IDEA   a planning office's ruled flow sheet: the real state machine, redlined
+   PICTURE the full state diagram, friction states in brick, ghost states dashed
+   COLOUR stone ground, black ink, brick for friction, white panels; night #171513
+   TYPE   Schibsted Grotesk throughout, weight for hierarchy
+   LAYOUT finding as title with figures in one ruled row, diagram full width beneath, then the ruled issue table */
+:root{color-scheme:light dark;--bg:light-dark(#e7e4df,#171513);--panel:light-dark(#ffffff,#211e1b);--ink:light-dark(#111111,#ece8e2);--muted:light-dark(#5a5650,#a8a198);--rule:light-dark(#c9c4bc,#3a3530);--brick:light-dark(#c8371e,#e8603f);--brick-tint:light-dark(#f6ddd6,#4a221a);--amber:light-dark(#9a5b00,#e0a245);--amber-tint:light-dark(#f5e7cf,#3d2c12)}
+:root[data-theme=light]{color-scheme:light}
+:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Schibsted Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;overflow-x:clip}
+a{color:inherit;text-decoration-color:var(--brick);text-underline-offset:3px}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88em}
+.band{padding-block:clamp(28px,4vw,56px);padding-left:max(5vw,16px,env(safe-area-inset-left,0px));padding-right:max(5vw,16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1240px;margin:0 auto}
+.top{padding-bottom:20px}
+.repo{color:var(--muted);font-size:14px;margin:0 0 14px}
+h1{font-size:clamp(32px,4.4vw,50px);line-height:1.05;letter-spacing:-.02em;font-weight:700;margin:0 0 16px;max-width:22ch;text-wrap:balance}
+.lede{font-size:17px;max-width:68ch;margin:0;color:var(--ink)}
+.figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(10em,1fr));border-top:2px solid var(--ink);border-bottom:1px solid var(--rule);margin-top:26px}
+.fig-n{padding:14px 16px 14px 0}
+.fig-n+.fig-n{padding-left:16px;border-left:1px solid var(--rule)}
+.fig-n b{display:block;font-size:clamp(28px,3.4vw,40px);line-height:1.1;font-weight:700;font-variant-numeric:tabular-nums}
+.fig-n b.hot{color:var(--brick)}
+.fig-n span{font-size:14px;color:var(--muted)}
+.sheet{background:var(--panel);border:1px solid var(--rule);border-radius:6px}
+.diagram-head{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:baseline;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--rule)}
+.diagram-head h2{margin:0;font-size:20px;font-weight:700}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:14px;color:var(--muted);margin:0;padding:0;list-style:none}
+.legend i{display:inline-block;width:22px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:6px;border:1.5px solid var(--ink);background:var(--panel)}
+.legend i.h{background:var(--brick);border-color:var(--brick)}
+.legend i.m{background:var(--brick-tint);border-color:var(--brick)}
+.legend i.g{border-style:dashed;border-color:var(--brick)}
+.legend i.s{border-radius:7px}
+.legend i.u{height:0;border:0;border-top:2px solid var(--ink);border-radius:0;width:24px;vertical-align:4px}
+.legend i.d{height:0;border:0;border-top:2px dashed var(--ink);border-radius:0;width:24px;vertical-align:4px}
+.scroll{overflow-x:auto}
+#diagram{padding:18px 12px 24px;min-height:420px;width:max-content;min-width:100%}
+#diagram svg{height:auto;display:block;margin:0 auto}
+.hidden-note{margin:0;padding:12px 20px 16px;border-top:1px solid var(--rule);font-size:14px;color:var(--muted)}
+#diagram .fallback{white-space:pre;font-size:13px;color:var(--muted)}
+h2.sec{font-size:clamp(24px,2.6vw,32px);line-height:1.1;letter-spacing:-.01em;margin:0 0 6px;font-weight:700}
+.sec-sub{color:var(--muted);margin:0 0 18px;max-width:70ch}
+table{width:100%;border-collapse:collapse;background:var(--panel)}
+thead th{text-align:left;font-size:14px;font-weight:500;color:var(--muted);padding:10px 14px;border-bottom:2px solid var(--ink)}
+td{vertical-align:top;padding:16px 14px;border-bottom:1px solid var(--rule)}
+td.fid{font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+tr:target td{background:var(--brick-tint)}
+.what strong{font-size:17px;display:block;line-height:1.3;margin-bottom:6px}
+.what p{margin:0 0 6px;max-width:68ch}
+.what .when{color:var(--muted)}
+.what .fix{border-left:3px solid var(--ink);padding-left:10px;margin-top:10px;border-radius:0}
+.what .src{font-size:13px;color:var(--muted);margin-top:8px}
+.pill{display:inline-block;font-size:13px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.pill.high{background:var(--brick);color:#fff}
+.pill.medium{background:var(--brick-tint);color:var(--brick)}
+.pill.low{background:var(--amber-tint);color:var(--amber)}
+.pill.info{border:1px solid var(--rule);color:var(--muted)}
+.ev{list-style:none;margin:0;padding:0;font-size:14px}
+.ev li{margin-bottom:8px}
+.ev .path{display:block;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;overflow-wrap:anywhere}
+.ev .note{color:var(--muted)}
+col.c-id{width:52px}col.c-sev{width:96px}col.c-ev{width:34%}
+.paths{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:24px;align-items:start}
+.path-card{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:18px 20px}
+.path-card h3{margin:0 0 10px;font-size:18px}
+.path-card ol{margin:0;padding-left:22px}
+.path-card li{margin-bottom:6px}
+.who{display:inline-block;font-size:12px;font-weight:700;padding:1px 7px;border-radius:4px;margin-right:4px;border:1px solid var(--rule)}
+.who.user{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.arrow{color:var(--muted)}
+.method p{margin:0 0 10px;max-width:62ch}
+.gt td{padding:12px 14px}
+.gt .pill.info{color:var(--ink)}
+.pd{margin-top:18px}
+.pd summary{cursor:pointer;font-weight:500;padding:12px 0;min-height:44px}
+.foot{font-size:14px;color:var(--muted);border-top:1px solid var(--rule)}
+@media(max-width:860px){.paths{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){
+  .fig-n+.fig-n{border-left:0;padding-left:0}
+  .figs{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .fig-n{padding-right:8px;border-bottom:1px solid var(--rule)}
+  table{font-size:15px}
+  .stack thead{display:none}
+  .stack colgroup{display:none}
+  .stack tr{display:grid;padding-block:12px;border-bottom:1px solid var(--rule)}
+  .stack td{display:block;border:0;padding:4px 0}
+  .stack td.fid{display:inline}
+  .stack td[data-l=Evidence]::before{content:"Evidence";display:block;font-size:13px;color:var(--muted);margin:6px 0 4px}
+  #diagram{min-height:300px}
+  .dscroll{max-height:72vh;overflow:auto;overscroll-behavior:contain}
+  .stack tr{grid-template-columns:auto 1fr;column-gap:10px}
+  .stack td.what,.stack td[data-l=Evidence]{grid-column:1 / -1}
+}
+</style>
+</head>
+<body>
+<header class="band top">
+  <div class="wrap">
+    <p class="repo">Source of truth: <a href="https://github.com/saucelabs/sample-app-web">saucelabs/sample-app-web</a> at <code>d5cd655</code></p>
+    <h1>Beyond its 12 planted bugs, SauceDemo has 3 serious problems any user can hit</h1>
+    <p class="lede">SauceDemo is Sauce Labs&#x27; practice app, with bugs planted on purpose for its test accounts. I mapped login, browsing, product pages and the cart from its source code: every state and arrow cites the line it came from. It surfaced the planted bugs, plus friction that affects every user, not just the test accounts.</p>
+    <div class="figs">
+      <div class="fig-n"><b>29</b><span>states mapped: 16 screens, 13 system</span></div>
+      <div class="fig-n"><b class="hot">3</b><span>high-severity issues</span></div>
+      <div class="fig-n"><b>12/12</b><span>planted bugs surfaced</span></div>
+      <div class="fig-n"><b>3</b><span>fewest clicks from login to a filled cart</span></div>
+    </div>
+  </div>
+</header>
+
+<section class="band" style="padding-top:8px">
+  <div class="wrap sheet">
+    <div class="diagram-head">
+      <h2>The flow as the code runs it</h2>
+      <ul class="legend">
+        <li><i></i>Screen</li>
+        <li><i class="s"></i>System step</li>
+        <li><i class="h"></i>High-severity</li>
+        <li><i class="m"></i>Medium</li>
+        <li><i class="g"></i>Ghost: no screen</li>
+        <li><i class="u"></i>User action</li>
+        <li><i class="d"></i>System event</li>
+      </ul>
+    </div>
+    <div class="scroll dscroll"><div id="diagram" role="img" aria-label="State diagram of the flow. Friction states are marked with issue numbers that match the table below."></div></div>
+    <p class="hidden-note">Handled errors hidden to keep the diagram readable: &#x27;This user has been locked out&#x27;, Login error message. Each shows a message and lets the user retry. Bugs planted for test accounts are listed in their own table below, not drawn.  Faint arrows are ways back to an earlier step.</p>
+  </div>
+</section>
+
+<section class="band" style="padding-top:8px">
+  <div class="wrap">
+    <h2 class="sec">Issues, worst first</h2>
+    <p class="sec-sub">Friction any user can hit. Each issue groups every check that fired along one failure chain. Numbers match the labels in the diagram. Every claim links to the lines of code it came from.</p>
+    <div class="scroll">
+      <table class="stack">
+        <colgroup><col class="c-id"><col class="c-sev"><col><col class="c-ev"></colgroup>
+        <thead><tr><th>#</th><th>Severity</th><th>What happens</th><th>Evidence</th></tr></thead>
+        <tbody>
+<tr id="F1" class="sev-high"><td data-l="#" class="fid">F1</td><td data-l="Severity"><span class="pill high">high</span></td><td data-l="Finding" class="what"><strong>Sessions end 10 minutes after login, even mid-use, with no warning</strong><p>The session cookie is set once at login with a fixed 10-minute expiry, and nothing extends it while you shop. The next page change throws you to the login screen with &#x27;You can only access /cart.html when you are logged in&#x27;, which reads like you did something wrong.</p><p class="when">When: Ten minutes after logging in, active or not</p><p class="fix">Fix: Extend the session on activity, warn before it ends, and word the message as &#x27;Your session timed out&#x27;.</p><p class="src">graph check · happens often · ghost state · Session ends 10 minutes after login</p></td><td data-l="Evidence"><ul class="ev"><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/utils/Credentials.js#L27-L32">utils/Credentials.js:27-32</a></span> <span class="note">Fixed expiry: now + 10 minutes, set only at login</span></li><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/components/PrivateRoute.jsx#L13-L17">components/PrivateRoute.jsx:13-17</a></span> <span class="note">Checked on every page change</span></li><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/pages/Login.jsx#L22-L28">pages/Login.jsx:22-28</a></span> <span class="note">Message shown after the redirect</span></li></ul></td></tr>
+<tr id="F2" class="sev-high"><td data-l="#" class="fid">F2</td><td data-l="Severity"><span class="pill high">high</span></td><td data-l="Finding" class="what"><strong>A mistyped or old URL shows a blank page with no way out</strong><p>There is no 404 route. When nothing matches, React Router renders nothing: no header, no menu, no link home. The only way out is editing the address bar.</p><p class="when">When: Any URL that matches no route, when the host serves the app for it</p><p class="fix">Fix: Add a catch-all route that shows a &#x27;page not found&#x27; message with a link to the product list.</p><p class="src">graph check · edge case · dead end, silent failure · Blank white page</p></td><td data-l="Evidence"><ul class="ev"><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/index.jsx#L36-L86">index.jsx:36-86</a></span> <span class="note">No path=&quot;*&quot; route</span></li><li><span class="path">react-router-dom 7 (package.json ^7.18.3)</span> <span class="note">&lt;Routes&gt; renders nothing when no route matches</span></li></ul></td></tr>
+<tr id="F3" class="sev-high"><td data-l="#" class="fid">F3</td><td data-l="Severity"><span class="pill high">high</span></td><td data-l="Finding" class="what"><strong>You can add an item that doesn&#x27;t exist, and then you can&#x27;t remove it</strong><p>The not-found page still offers Add to cart. It saves the bad id, the button flips to Remove, and the cart badge counts it. The cart page has no row for it, so it can&#x27;t be removed there. The badge stays wrong until someone finds Reset App State in the menu.</p><p class="when">When: Add to cart on the &#x27;ITEM NOT FOUND&#x27; page (a bad link, or problem_user opening the last product)</p><p class="fix">Fix: Hide Add to cart when the item isn&#x27;t found, and drop unknown ids when reading the cart.</p><p class="src">graph check · edge case · ghost state, silent failure · Item that doesn&#x27;t exist saved to cart</p></td><td data-l="Evidence"><ul class="ev"><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/pages/InventoryItem.jsx#L83-L84">pages/InventoryItem.jsx:83-84</a></span> <span class="note">Saves whatever id the page has</span></li><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/utils/shopping-cart.js#L2-L14">utils/shopping-cart.js:2-14</a></span> <span class="note">No check that the id is a real product</span></li><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/components/CartButton.jsx#L24-L27">components/CartButton.jsx:24-27</a></span> <span class="note">Badge counts every saved id</span></li><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/pages/Cart.jsx#L40-L42">pages/Cart.jsx:40-42</a></span> <span class="note">Looks up each id; unknown ids are undefined</span></li><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/components/CartItem.jsx#L18-L20">components/CartItem.jsx:18-20</a></span> <span class="note">Undefined item renders an empty div, with no Remove button</span></li><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/pages/InventoryItem.jsx#L84">pages/InventoryItem.jsx:84</a></span> <span class="note">Button flips to Remove</span></li></ul></td></tr>
+<tr id="F4" class="sev-medium"><td data-l="#" class="fid">F4</td><td data-l="Severity"><span class="pill medium">medium</span></td><td data-l="Finding" class="what"><strong>After Reset App State, the product list still shows items as in the cart</strong><p>Reset empties the cart and the badge clears, but every product button keeps saying Remove. Only the badge listens for cart changes; each button keeps its own copy, read once when the page loaded. The screen contradicts the cart until the user leaves the page and comes back.</p><p class="fix">Fix: Have product buttons read cart state from one shared source, or subscribe to cart changes like the badge does.</p><p class="src">graph check · silent failure · Buttons still say Remove for an empty cart</p></td><td data-l="Evidence"><ul class="ev"><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/components/InventoryListItem.jsx#L22">components/InventoryListItem.jsx:22</a></span> <span class="note">Button state copied once on mount</span></li><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/components/CartButton.jsx#L16-L22">components/CartButton.jsx:16-22</a></span> <span class="note">Only the badge registers a listener</span></li><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/utils/shopping-cart.js#L64-L72">utils/shopping-cart.js:64-72</a></span> <span class="note"></span></li></ul></td></tr>
+<tr id="F5" class="sev-medium"><td data-l="#" class="fid">F5</td><td data-l="Severity"><span class="pill medium">medium</span></td><td data-l="Finding" class="what"><strong>Logging back in forgets where you were</strong><p>The redirect to login saves the page you were on, but login ignores it and always opens the product list. Anyone sent to log in from the cart or a product page has to find their way back. The model counts 2 actions from there to the goal.</p><p class="src">graph check · progress loss · Log back in</p></td><td data-l="Evidence"><ul class="ev"><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/components/PrivateRoute.jsx#L16">components/PrivateRoute.jsx:16</a></span> <span class="note">state.from saved</span></li><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/pages/Login.jsx#L58-L59">pages/Login.jsx:58-59</a></span> <span class="note">Always history.push(ROUTES.INVENTORY)</span></li></ul></td></tr>
+<tr id="F6" class="sev-medium"><td data-l="#" class="fid">F6</td><td data-l="Severity"><span class="pill medium">medium</span></td><td data-l="Finding" class="what"><strong>Logging out keeps the cart for the next person</strong><p>The cart lives in the browser&#x27;s localStorage, not with the account. Logout only removes the session cookie, so whoever logs in next on the same browser sees the previous person&#x27;s cart.</p><p class="fix">Fix: Clear the cart on logout, or store it per user.</p><p class="src">code review · Log out (cart kept)</p></td><td data-l="Evidence"><ul class="ev"><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/components/DrawerMenu.jsx#L142-L146">components/DrawerMenu.jsx:142-146</a></span> <span class="note">removeCredentials() only</span></li><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/utils/shopping-cart.js#L39-L56">utils/shopping-cart.js:39-56</a></span> <span class="note">One global &#x27;cart-contents&#x27; key</span></li></ul></td></tr>
+<tr id="F7" class="sev-low"><td data-l="#" class="fid">F7</td><td data-l="Severity"><span class="pill low">low</span></td><td data-l="Finding" class="what"><strong>Reset App State wipes the cart with no confirmation and no undo</strong><p>One tap in the menu, next to Logout, clears everything.</p><p class="src">code review · Reset App State empties cart</p></td><td data-l="Evidence"><ul class="ev"><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/components/DrawerMenu.jsx#L138-L164">components/DrawerMenu.jsx:138-164</a></span> <span class="note">Logout and Reset sit next to each other</span></li></ul></td></tr>
+<tr id="F8" class="sev-low"><td data-l="#" class="fid">F8</td><td data-l="Severity"><span class="pill low">low</span></td><td data-l="Finding" class="what"><strong>The sort order resets every time you come back to the list</strong><p>The list always starts sorted A to Z. Open a product and press Back, or tap Continue Shopping in the cart, and your chosen sort is gone.</p><p class="fix">Fix: Keep the sort in the URL or in storage.</p><p class="src">code review · Product list</p></td><td data-l="Evidence"><ul class="ev"><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/pages/Inventory.jsx#L19-L22">pages/Inventory.jsx:19-22</a></span> <span class="note">Initial state is A to Z on every mount</span></li><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/pages/InventoryItem.jsx#L59-L61">pages/InventoryItem.jsx:59-61</a></span> <span class="note">Back pushes a fresh list page</span></li></ul></td></tr>
+<tr id="F9" class="sev-info"><td data-l="#" class="fid">F9</td><td data-l="Severity"><span class="pill info">info</span></td><td data-l="Finding" class="what"><strong>Cart listeners are added on every mount and never removed</strong><p>Each time a page with the cart badge mounts, it adds another listener, and none are removed. Over a session, every cart change re-runs listeners for badges that no longer exist.</p><p class="src">code review · Save item to cart</p></td><td data-l="Evidence"><ul class="ev"><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/components/CartButton.jsx#L20-L22">components/CartButton.jsx:20-22</a></span> <span class="note">No cleanup function</span></li><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/utils/shopping-cart.js#L74-L79">utils/shopping-cart.js:74-79</a></span> <span class="note"></span></li></ul></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="band" style="padding-top:8px"><div class="wrap"><h2 class="sec">Ground truth: the planted bugs</h2><p class="sec-sub">saucelabs/sample-app-web plants bugs on purpose for its test accounts. Here is how each one showed up in the map: 12 of 12 surfaced.</p><div class="scroll"><table class="stack gt"><thead><tr><th>Test account</th><th>Planted bug</th><th>Status</th><th>How it showed up</th></tr></thead><tbody><tr><td data-l="Test account"><code>locked_out_user</code></td><td data-l="Planted bug">Can&#x27;t log in</td><td data-l="Status"><span class="pill info">Mapped</span></td><td data-l="How it showed up">Mapped as its own state, with a visible message</td></tr><tr><td data-l="Test account"><code>problem_user</code></td><td data-l="Planted bug">Every product image is broken</td><td data-l="Status"><span class="pill info">Flagged</span></td><td data-l="How it showed up"><a href="#P5">P5</a> · code review</td></tr><tr><td data-l="Test account"><code>problem_user</code></td><td data-l="Planted bug">Sorting does nothing</td><td data-l="Status"><span class="pill info">Flagged</span></td><td data-l="How it showed up"><a href="#P4">P4</a> · ghost state, silent failure</td></tr><tr><td data-l="Test account"><code>problem_user</code></td><td data-l="Planted bug">Some Add to cart clicks do nothing</td><td data-l="Status"><span class="pill info">Flagged</span></td><td data-l="How it showed up"><a href="#P2">P2</a> · ghost state, silent failure</td></tr><tr><td data-l="Test account"><code>problem_user</code></td><td data-l="Planted bug">Some Remove clicks do nothing</td><td data-l="Status"><span class="pill info">Flagged</span></td><td data-l="How it showed up"><a href="#P3">P3</a> · ghost state, silent failure</td></tr><tr><td data-l="Test account"><code>problem_user</code></td><td data-l="Planted bug">Products open the wrong page</td><td data-l="Status"><span class="pill info">Flagged</span></td><td data-l="How it showed up"><a href="#P7">P7</a> · code review</td></tr><tr><td data-l="Test account"><code>problem_user</code></td><td data-l="Planted bug">About link goes to a 404</td><td data-l="Status"><span class="pill info">Flagged</span></td><td data-l="How it showed up"><a href="#P9">P9</a> · code review</td></tr><tr><td data-l="Test account"><code>error_user</code></td><td data-l="Planted bug">Sorting shows an error alert</td><td data-l="Status"><span class="pill info">Mapped</span></td><td data-l="How it showed up">Mapped as its own state, with a visible message</td></tr><tr><td data-l="Test account"><code>error_user</code></td><td data-l="Planted bug">Some Add and Remove clicks throw</td><td data-l="Status"><span class="pill info">Flagged</span></td><td data-l="How it showed up"><a href="#P1">P1</a> · ghost state, silent failure</td></tr><tr><td data-l="Test account"><code>error_user</code></td><td data-l="Planted bug">Product description fails to render</td><td data-l="Status"><span class="pill info">Mapped</span></td><td data-l="How it showed up">Mapped as its own state, with a visible message</td></tr><tr><td data-l="Test account"><code>performance_glitch_user</code></td><td data-l="Planted bug">Product list freezes for 5 seconds</td><td data-l="Status"><span class="pill info">Flagged</span></td><td data-l="How it showed up"><a href="#P8">P8</a> · code review</td></tr><tr><td data-l="Test account"><code>visual_user</code></td><td data-l="Planted bug">Random prices and misaligned layout</td><td data-l="Status"><span class="pill info">Flagged</span></td><td data-l="How it showed up"><a href="#P6">P6</a> · code review</td></tr></tbody></table></div><details class="pd"><summary>Details for the 9 planted issues the checks flagged</summary><div class="scroll"><table class="stack"><colgroup><col class="c-id"><col class="c-sev"><col><col class="c-ev"></colgroup><tbody><tr id="P1" class="sev-high"><td data-l="#" class="fid">P1</td><td data-l="Severity"><span class="pill high">high</span></td><td data-l="Finding" class="what"><strong>Some Add and Remove clicks throw, and nothing happens on screen</strong><p>The click handler throws. React error boundaries don&#x27;t catch errors in event handlers, so the screen doesn&#x27;t change. The error goes to Backtrace; the user sees nothing.</p><p class="src">graph check · planted for error_user · ghost state, silent failure · Add or Remove throws an error</p></td><td data-l="Evidence"><ul class="ev"><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/components/InventoryListItem.jsx#L39-L44">components/InventoryListItem.jsx:39-44</a></span> <span class="note"></span></li><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/components/InventoryListItem.jsx#L63-L68">components/InventoryListItem.jsx:63-68</a></span> <span class="note"></span></li><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/pages/InventoryItem.jsx#L76-L81">pages/InventoryItem.jsx:76-81</a></span> <span class="note"></span></li><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/pages/InventoryItem.jsx#L100-L105">pages/InventoryItem.jsx:100-105</a></span> <span class="note"></span></li><li><span class="path">React docs, error boundaries</span> <span class="note">Error boundaries do not catch errors inside event handlers</span></li><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/components/InventoryListItem.jsx#L42">components/InventoryListItem.jsx:42</a></span> <span class="note"></span></li></ul></td></tr>
+<tr id="P2" class="sev-high"><td data-l="#" class="fid">P2</td><td data-l="Severity"><span class="pill high">high</span></td><td data-l="Finding" class="what"><strong>Some Add to cart clicks do nothing</strong><p>For odd-numbered products, the click returns before saving. The button doesn&#x27;t change and nothing says why.</p><p class="src">graph check · planted for problem_user · ghost state, silent failure · Add to cart ignored</p></td><td data-l="Evidence"><ul class="ev"><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/components/InventoryListItem.jsx#L33-L38">components/InventoryListItem.jsx:33-38</a></span> <span class="note"></span></li><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/pages/InventoryItem.jsx#L70-L75">pages/InventoryItem.jsx:70-75</a></span> <span class="note"></span></li><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/components/InventoryListItem.jsx#L37">components/InventoryListItem.jsx:37</a></span> <span class="note"></span></li></ul></td></tr>
+<tr id="P3" class="sev-high"><td data-l="#" class="fid">P3</td><td data-l="Severity"><span class="pill high">high</span></td><td data-l="Finding" class="what"><strong>Some Remove clicks do nothing</strong><p>For even-numbered products, Remove returns before changing anything. No message.</p><p class="src">graph check · planted for problem_user · ghost state, silent failure · Remove ignored</p></td><td data-l="Evidence"><ul class="ev"><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/components/InventoryListItem.jsx#L57-L62">components/InventoryListItem.jsx:57-62</a></span> <span class="note"></span></li><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/pages/InventoryItem.jsx#L94-L99">pages/InventoryItem.jsx:94-99</a></span> <span class="note"></span></li><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/components/InventoryListItem.jsx#L61">components/InventoryListItem.jsx:61</a></span> <span class="note"></span></li></ul></td></tr>
+<tr id="P4" class="sev-high"><td data-l="#" class="fid">P4</td><td data-l="Severity"><span class="pill high">high</span></td><td data-l="Finding" class="what"><strong>Sorting does nothing</strong><p>Picking a sort option returns before anything changes. No message.</p><p class="src">graph check · planted for problem_user · ghost state, silent failure · Sort request ignored</p></td><td data-l="Evidence"><ul class="ev"><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/pages/Inventory.jsx#L47-L50">pages/Inventory.jsx:47-50</a></span> <span class="note">Returns early for problem_user</span></li><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/pages/Inventory.jsx#L50">pages/Inventory.jsx:50</a></span> <span class="note"></span></li></ul></td></tr>
+<tr id="P5" class="sev-medium"><td data-l="#" class="fid">P5</td><td data-l="Severity"><span class="pill medium">medium</span></td><td data-l="Finding" class="what"><strong>Every product image is broken</strong><p>Images are swapped for a 404 image.</p><p class="src">code review · planted for problem_user · Product list</p></td><td data-l="Evidence"><ul class="ev"><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/pages/Inventory.jsx#L115-L119">pages/Inventory.jsx:115-119</a></span> <span class="note"></span></li></ul></td></tr>
+<tr id="P6" class="sev-medium"><td data-l="#" class="fid">P6</td><td data-l="Severity"><span class="pill medium">medium</span></td><td data-l="Finding" class="what"><strong>Prices change on every render and don&#x27;t match the cart</strong><p>List prices are random on each render, while the cart shows the real price. Some elements are also misaligned, and the first image is broken.</p><p class="src">code review · planted for visual_user · Product list</p></td><td data-l="Evidence"><ul class="ev"><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/pages/Inventory.jsx#L30-L31">pages/Inventory.jsx:30-31</a></span> <span class="note"></span></li><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/pages/Inventory.jsx#L115-L124">pages/Inventory.jsx:115-124</a></span> <span class="note"></span></li><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/components/CartItem.jsx#L55-L61">components/CartItem.jsx:55-61</a></span> <span class="note">Cart uses the catalogue price</span></li></ul></td></tr>
+<tr id="P7" class="sev-medium"><td data-l="#" class="fid">P7</td><td data-l="Severity"><span class="pill medium">medium</span></td><td data-l="Finding" class="what"><strong>Products open the wrong product page</strong><p>Links add 1 to the product id, so each product opens its neighbour, and the last one opens &#x27;ITEM NOT FOUND&#x27;.</p><p class="src">code review · planted for problem_user · Product details</p></td><td data-l="Evidence"><ul class="ev"><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/components/InventoryListItem.jsx#L73-L77">components/InventoryListItem.jsx:73-77</a></span> <span class="note"></span></li><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/components/CartItem.jsx#L23-L29">components/CartItem.jsx:23-29</a></span> <span class="note"></span></li></ul></td></tr>
+<tr id="P8" class="sev-medium"><td data-l="#" class="fid">P8</td><td data-l="Severity"><span class="pill medium">medium</span></td><td data-l="Finding" class="what"><strong>The product list freezes for 5 seconds with no indicator</strong><p>A busy loop blocks the browser on every render of the list, so not even a spinner can draw.</p><p class="src">code review · planted for performance_glitch_user · Page frozen for 5 seconds</p></td><td data-l="Evidence"><ul class="ev"><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/pages/Inventory.jsx#L24-L36">pages/Inventory.jsx:24-36</a></span> <span class="note"></span></li></ul></td></tr>
+<tr id="P9" class="sev-low"><td data-l="#" class="fid">P9</td><td data-l="Severity"><span class="pill low">low</span></td><td data-l="Finding" class="what"><strong>The About link goes to a 404</strong><p>The menu&#x27;s About link points to an error page.</p><p class="src">code review · planted for problem_user · Product list</p></td><td data-l="Evidence"><ul class="ev"><li><span class="path"><a href="https://github.com/saucelabs/sample-app-web/blob/d5cd655fa8a974f4ddb6fde2868586e0084211d2/src/components/DrawerMenu.jsx#L24-L26">components/DrawerMenu.jsx:24-26</a></span> <span class="note"></span></li></ul></td></tr></tbody></table></div></details></div></section>
+
+<section class="band" style="padding-top:8px">
+  <div class="wrap paths">
+    <div class="path-card"><h3>Happy path from Login page: 3 actions</h3><ol><li><span class="who user">user</span> Log in <span class="arrow">→</span> Check username and password</li><li><span class="who system">system</span> Valid user <span class="arrow">→</span> Product list</li><li><span class="who user">user</span> Add to cart <span class="arrow">→</span> Save item to cart</li><li><span class="who system">system</span> Button flips, badge counts <span class="arrow">→</span> Product list, item in cart</li><li><span class="who user">user</span> Open cart <span class="arrow">→</span> Cart with chosen items</li></ol></div>
+    <div class="method">
+      <h3 style="margin:0 0 10px;font-size:18px">How this was made</h3>
+      <p>Static reading of the app&#x27;s source at the commit above, covering login, the product list, product pages, the cart and the side menu. Later pages and the experimental catalog pages were not mapped.</p>
+      <p>Graph checks find dead ends, traps, loading states nothing resolves, ghost states, silent failures and loops that undo progress. A code review adds what the graph can't see. Severity drops a level for paths that only happen rarely.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="band foot"><div class="wrap">Generated by frictionmap from 29 states and 51 transitions.</div></footer>
+
+<script type="text/plain" id="mmd">flowchart TD
+  login["Login page"]
+  deep_link["Opens a link to a page"]
+  unknown_url["Mistyped or old URL"]
+  blank_page["Blank white page<br/>F2"]
+  sys_verify(["Check username and<br/>password"])
+  login_redirected["Login with 'You can<br/>only access ... when<br/>logged in'"]
+  sys_verify_return(["Log back in<br/>F5"])
+  inventory["Product list<br/>F8"]
+  sys_sort(["Re-sort the list"])
+  sys_add(["Save item to cart<br/>F9"])
+  inventory_added["Product list, item in<br/>cart"]
+  product_page["Product details"]
+  product_not_found["'ITEM NOT FOUND' page"]
+  sys_add_phantom(["Item that doesn't<br/>exist saved to cart<br/>F3"])
+  cart(("Cart with chosen items"))
+  sys_remove(["Remove item from cart"])
+  sys_reset(["Reset App State<br/>empties cart<br/>F7"])
+  inventory_stale["Buttons still say<br/>Remove for an empty<br/>cart<br/>F4"]
+  sys_session_expired(["Session ends 10<br/>minutes after login<br/>F1"])
+  sys_logout(["Log out (cart kept)<br/>F6"])
+  login -->|"Log in"| sys_verify
+  sys_verify -.->|"Valid user"| inventory
+  deep_link -.->|"Not logged in"| login_redirected
+  unknown_url -.->|"No route matches"| blank_page
+  login_redirected -->|"Log in again"| sys_verify_return
+  sys_verify_return -.->|"Always the product<br/>list"| inventory
+  inventory -->|"Choose a sort"| sys_sort
+  sys_sort -.->|"List re-sorted"| inventory
+  inventory -->|"Add to cart"| sys_add
+  sys_add -.->|"Button flips,<br/>badge counts"| inventory_added
+  inventory -->|"Open a product"| product_page
+  inventory -->|"Open last product<br/>(problem_user)"| product_not_found
+  deep_link -.->|"Logged in, bad ?id"| product_not_found
+  product_page -->|"Back to products"| inventory
+  product_page -->|"Add to cart"| sys_add
+  product_not_found -->|"Back to products"| inventory
+  product_not_found -->|"Add to cart"| sys_add_phantom
+  sys_add_phantom -.->|"Looks like it<br/>worked"| product_not_found
+  cart -->|"Remove"| sys_remove
+  sys_remove -.->|"Row disappears"| cart
+  cart -->|"Continue Shopping"| inventory
+  inventory -->|"Reset App State<br/>(menu)"| sys_reset
+  sys_reset -.->|"Only the badge<br/>hears it"| inventory_stale
+  inventory_stale -->|"Leave and come<br/>back"| inventory
+  inventory -.->|"10 minutes after<br/>login"| sys_session_expired
+  sys_session_expired -.->|"On the next page<br/>change"| login_redirected
+  inventory -->|"Logout (menu)"| sys_logout
+  sys_logout -.->|"Back to login"| login
+  product_page -.->|"10 minutes after<br/>login"| sys_session_expired
+  cart -.->|"10 minutes after<br/>login"| sys_session_expired
+  inventory_added -->|"Open cart"| cart
+  inventory_added -->|"Add another"| sys_add
+  linkStyle 13,15,20 stroke:#9a948b,stroke-width:1px
+  class login,deep_link,unknown_url entry
+  class blank_page high
+  class sys_verify,sys_sort,sys_add,sys_remove,sys_reset system
+  class login_redirected,inventory,inventory_added,product_page,product_not_found step
+  class sys_verify_return,inventory_stale,sys_logout medium
+  class sys_add_phantom,sys_session_expired ghost
+  class cart goal
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+{
+  var root = document.documentElement;
+  var el = document.getElementById("diagram");
+  var src = document.getElementById("mmd").textContent;
+  function isDark() {
+    var t = root.getAttribute("data-theme");
+    if (t) return t === "dark";
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }
+  function classDefs(dark) {
+    var ink = dark ? "#ece8e2" : "#111111";
+    var panel = dark ? "#211e1b" : "#ffffff";
+    var brick = dark ? "#e8603f" : "#c8371e";
+    var tint = dark ? "#4a221a" : "#f6ddd6";
+    var sys = dark ? "#2b2723" : "#f1efeb";
+    return [
+      "classDef step fill:" + panel + ",stroke:" + ink + ",stroke-width:1.5px,color:" + ink,
+      "classDef entry fill:" + panel + ",stroke:" + ink + ",stroke-width:2.5px,color:" + ink,
+      "classDef goal fill:" + ink + ",stroke:" + ink + ",color:" + panel,
+      "classDef system fill:" + sys + ",stroke:" + ink + ",stroke-width:1px,color:" + ink,
+      "classDef high fill:" + brick + ",stroke:" + brick + ",color:#ffffff",
+      "classDef medium fill:" + tint + ",stroke:" + brick + ",stroke-width:1.5px,color:" + ink,
+      "classDef ghost fill:" + panel + ",stroke:" + brick + ",stroke-width:2px,stroke-dasharray:6 4,color:" + brick
+    ].join("\n");
+  }
+  var n = 0;
+  function render() {
+    if (!window.mermaid) {
+      el.innerHTML = '<div class="fallback"></div>';
+      el.firstChild.textContent = src;
+      return;
+    }
+    var dark = isDark();
+    window.mermaid.initialize({
+      startOnLoad: false,
+      securityLevel: "strict",
+      theme: "base",
+      flowchart: { curve: "basis", nodeSpacing: 30, rankSpacing: 48, htmlLabels: true, useMaxWidth: false },
+      themeVariables: {
+        fontFamily: "Schibsted Grotesk, system-ui, sans-serif",
+        fontSize: "14px",
+        lineColor: dark ? "#8f887f" : "#5a5650",
+        textColor: dark ? "#ece8e2" : "#111111",
+        edgeLabelBackground: dark ? "#211e1b" : "#ffffff",
+        primaryColor: dark ? "#211e1b" : "#ffffff",
+        primaryBorderColor: dark ? "#ece8e2" : "#111111",
+        primaryTextColor: dark ? "#ece8e2" : "#111111"
+      }
+    });
+    n += 1;
+    window.mermaid.render("fm" + n, src + "\n" + classDefs(dark)).then(function (r) {
+      el.innerHTML = r.svg;
+      var svg = el.querySelector("svg");
+      if (svg && svg.viewBox && svg.viewBox.baseVal) {
+        var nat = svg.viewBox.baseVal.width, cw = el.parentNode.clientWidth - 24;
+        var w = nat <= cw ? nat : Math.max(cw, nat * 0.85);
+        svg.removeAttribute("height");
+        svg.style.width = w + "px";
+        svg.style.maxWidth = "none";
+        var sc = el.parentNode;
+        sc.scrollLeft = Math.max(0, (sc.scrollWidth - sc.clientWidth) / 2);
+      }
+    }).catch(function () {
+      el.innerHTML = '<div class="fallback"></div>';
+      el.firstChild.textContent = src;
+    });
+  }
+  render();
+  new MutationObserver(render).observe(root, { attributes: true, attributeFilter: ["data-theme"] });
+  if (window.matchMedia) {
+    var mq = window.matchMedia("(prefers-color-scheme: dark)");
+    if (mq.addEventListener) mq.addEventListener("change", render);
+  }
+}
+</script>
+</body>
+</html>
