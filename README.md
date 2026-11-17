@@ -6,9 +6,14 @@
 
 ## The problem
 
-Every app has a picture of how it's supposed to work: designs, mockups, flowcharts. But those pictures go out of date, and they usually show only the happy path, where everything goes right.
+Every app has a picture of how it's supposed to work: designs, mockups, flowcharts. That picture is rarely complete.
 
-The code is different. The code is what actually runs. Every path a person can take is in there, including the messy ones: the error nobody designed a screen for, the button that spins forever, the page you can't get out of.
+- **It goes out of date.** The product keeps changing; the designs don't.
+- **It leaves things out.** Designs usually show the happy path. Edge cases and error states often never get a screen.
+- **The people who knew leave.** The engineer who built it or the designer who planned it moves on, and the knowledge goes with them.
+- **Seeing it for yourself is slow.** In a complex product, reaching one specific scenario can mean getting QA access, creating new test accounts and switching on an exact combination of settings. That can take hours, sometimes days, for a single case.
+
+The code is different. It's what actually runs, and it's always up to date. Every path a person can take is in there, including the messy ones: the error nobody designed a screen for, the button that spins forever, the page you can't get out of. And you can read every scenario without setting any of them up.
 
 ## Why I built this
 
