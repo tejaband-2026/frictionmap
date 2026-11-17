@@ -1,66 +1,70 @@
 # frictionmap
 
-**Your designs show the flow someone intended. Your code shows every flow that can actually happen.**
-
-frictionmap is an agent skill that reads a codebase, rebuilds a user flow (signup, login, onboarding, search, settings) as a state machine, and finds the friction no design file shows: dead ends, spinners that never resolve, failures the user never hears about, and loops that throw away progress.
-
-Every state and every arrow cites the file and lines it came from, so an engineer can check any claim in seconds.
+**Find where people get stuck in your app, by reading its code.**
 
 ![frictionmap run on SauceDemo](poster.png)
 
-## Why
+## The problem
 
-As a PM, when I need to understand how an existing flow really works, the Figma is often stale, missing, or only covers the happy path. The source of truth is the code. Reading it by hand catches the real end-to-end flow, the edge cases and how data gets updated, but it takes days. frictionmap turns that into a repeatable method.
+Every app has a picture of how it's supposed to work: designs, mockups, flowcharts. But those pictures go out of date, and they usually show only the happy path, where everything goes right.
 
-## What it finds
+The code is different. The code is what actually runs. Every path a person can take is in there, including the messy ones: the error nobody designed a screen for, the button that spins forever, the page you can't get out of.
 
-| Check | What the user experiences |
-| --- | --- |
-| Dead end | Nothing on screen moves them forward |
-| Trap | They can click, but can never finish |
-| Stuck loading | A spinner or frozen screen nothing resolves |
-| Ghost state | Something failed or changed in the system, and the screen doesn't show it |
-| Silent failure | An error happened, with no message |
-| Back-only recovery | No retry; the only fix is going back a step |
-| Progress loss | They redo steps they already finished |
+## Why I built this
 
-Plus a code review for what a graph can't see: misleading copy, unreachable feature code, contradictions in the code. Details in [checks.md](checks.md).
+I'm a product manager. When I need to understand how part of an app really works, the designs are often old, missing, or too tidy. So I read the code, because it's the only place that tells the truth. It works, but it takes days.
 
-## Example: SauceDemo, with a built-in answer key
+frictionmap does that reading for you.
 
-[SauceDemo](https://www.saucedemo.com) is Sauce Labs' practice app for test automation. Its source ([saucelabs/sample-app-web](https://github.com/saucelabs/sample-app-web)) plants bugs on purpose for test accounts like `problem_user` and `error_user`. That makes it a fair test.
+## How it works
 
-Mapping login, browsing and the cart (29 states, 51 transitions):
+1. **Pick one journey**, like "sign up" or "reset my password".
+2. **An AI agent reads the code.** It lists every screen a person can see, and every step happening behind the scenes.
+3. **It draws the map.** Every screen and every arrow points to the exact line of code it came from, so anyone can check it.
+4. **It looks for trouble spots:**
+   - **Dead ends:** nothing on screen lets you move forward
+   - **Endless loading:** a spinner or frozen screen that never finishes
+   - **Ghost states:** something happened behind the scenes, but the screen doesn't show it
+   - **Silent failures:** something went wrong, and nobody tells you
+   - **Lost progress:** you have to redo steps you already finished
+5. **You get a report:** the map, the problems from worst to least bad, and a suggested fix for each.
 
-- **12 planted bugs surfaced**, each tied to the lines that cause it.
-- **3 serious problems any user can hit**, outside the planted ones:
-  1. **Sessions end 10 minutes after login, even mid-use.** The cookie expiry is fixed at login and nothing extends it. The next click lands on a login screen that reads like you did something wrong.
-  2. **A mistyped URL shows a blank page.** There's no catch-all route: no header, no menu, no way out.
-  3. **You can add an item that doesn't exist, and can't remove it.** The not-found page still offers Add to cart. The badge counts the item, but the cart has no row for it.
-- **Plus:** logging back in forgets where you were, logging out leaves your cart for the next person, and after Reset App State the buttons still say Remove.
+## Does it work? A test with an answer key
 
-Full report: [example-saucedemo-report.html](example-saucedemo-report.html) · Model: [flow.json](example-saucedemo-flow.json)
+SauceDemo is a practice shopping app that Sauce Labs built for testing. Its makers hid bugs in it on purpose for special test accounts, so it comes with an answer key.
 
-## Use it
+frictionmap mapped login, browsing and the cart: 29 screens and behind-the-scenes steps. It found:
 
-Copy this folder into your agent's skills directory (for Claude Code: `~/.claude/skills/frictionmap`). It follows the open [Agent Skills](https://agentskills.io) format, so it works with other compatible agents too. Then ask:
+- **The 12 hidden bugs**, each tied to the line of code that causes it.
+- **3 problems any user could hit**, outside the hidden ones:
+  1. You're logged out 10 minutes after logging in, even mid-use. The message makes it sound like your fault.
+  2. Type a wrong web address and you get a blank white page with no way back.
+  3. You can add a product that doesn't exist to your cart. The cart counts it, but you can't see it or remove it.
 
-> Map our signup flow from the landing page to the first dashboard and find the friction.
+None of these show up in a design, because no screen exists for them.
 
-The agent follows [SKILL.md](SKILL.md): it scopes the flow, traces states and transitions with citations, writes `flow.json`, then runs:
+Full report: [example-saucedemo-report.html](example-saucedemo-report.html) (download it and open it in a browser; GitHub shows it as code). The map itself: [example-saucedemo-flow.json](example-saucedemo-flow.json).
 
-```bash
-python3 analyze.py flow.json --repo path/to/repo --out out/
-```
+## Try it
 
-The analyzer uses the Python standard library only. It verifies every citation against the repo, runs the checks and writes `report.html`, `findings.json` and `flow.mmd`. The `.mmd` file is Mermaid source that renders directly in GitHub markdown.
+You'll need an AI coding agent such as Claude Code.
 
-## Limits
+1. Download this repo and put the folder in your agent's skills folder. For Claude Code, that's `~/.claude/skills/frictionmap`.
+2. Open your project and ask: *"Map our sign-up flow and find where people get stuck."*
 
-- It reads code statically. It doesn't run your app, so frequencies are estimates (`common`, `edge`, `rare`), not measurements.
-- The model is only as good as the trace. That's why every line is cited and the analyzer refuses uncited claims.
-- On a private codebase, share the report, not the code. Reports cite paths and line numbers, not code snippets.
+The agent follows [SKILL.md](SKILL.md). A small Python script, [analyze.py](analyze.py), checks every code reference and builds the report. It needs nothing installed beyond Python.
+
+## Good to know
+
+- **It reads code; it doesn't run your app.** It can tell you what *can* happen, not how often.
+- **It's only as good as its reading.** That's why every claim links to a line of code, and the script rejects claims without one.
+- **Private code?** Share the report, not the code. Reports list file names and line numbers, never the code itself.
+
+## For the curious
+
+- [checks.md](checks.md): every check, and how severity is decided
+- [schema.md](schema.md): the format of the map file
 
 ## License
 
-MIT
+MIT: free to use, change and share.
