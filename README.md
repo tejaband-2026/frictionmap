@@ -17,9 +17,9 @@ The code is different. It's what actually runs, and it's always up to date. Ever
 
 ## Why I built this
 
-I'm a product manager. When I need to understand how part of an app really works, the designs are often old, missing, or too tidy. So I read the code, because it's the only place that tells the truth. It works, but it takes days.
+I'm a product manager, and I ran into every one of these. So I started going straight to the code. It worked better than anything else: I could see the real end-to-end flow, every edge case, every error and how the data changes at each step, without setting up a single test account.
 
-frictionmap does that reading for you.
+The catch is that reading code by hand is slow, and you start from zero every time. frictionmap turns that habit into something anyone can repeat, in a fraction of the time.
 
 ## How it works
 
